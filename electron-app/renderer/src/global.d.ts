@@ -88,6 +88,16 @@ import type {
   PayrollWorkflowStatus,
 } from './models/PayrollPeriod';
 import type {
+  CompanyLogoSelection,
+  CompanyProfile,
+  Payslip,
+  PayslipFilters,
+  PayslipGenerationResult,
+  PayslipOptions,
+  PayslipPdfExportResult,
+  PayslipSummary,
+} from './models/Payslip';
+import type {
   BankTransferReport,
   ContributionReport,
   LineItemReport,
@@ -279,6 +289,36 @@ export interface PayrollApi {
     create: (payload: ContributionRecordInput) => Promise<ContributionRecord>;
     setStatus: (id: string, status: ContributionRecordStatus) => Promise<ContributionRecord>;
     delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
+  };
+  companyProfile: {
+    get: () => Promise<CompanyProfile>;
+    update: (payload: Partial<CompanyProfile> & { company_name: string }) => Promise<CompanyProfile>;
+    chooseLogo: () => Promise<CompanyLogoSelection>;
+  };
+  payslip: {
+    options: () => Promise<PayslipOptions>;
+    list: (filters?: PayslipFilters) => Promise<{ data: Payslip[]; total: number }>;
+    summary: (filters?: PayslipFilters) => Promise<PayslipSummary>;
+    get: (id: string) => Promise<Payslip | null>;
+    employeeList: (employeeId: string) => Promise<{ data: Payslip[]; total: number }>;
+    employeeGet: (id: string, employeeId: string) => Promise<Payslip | null>;
+    generate: (payload: {
+      period_id: string;
+      actor?: string;
+      force?: boolean;
+    }) => Promise<PayslipGenerationResult>;
+    publish: (id: string, actor?: string) => Promise<Payslip>;
+    unpublish: (id: string, actor?: string) => Promise<Payslip>;
+    publishPeriod: (
+      periodId: string,
+      actor?: string,
+    ) => Promise<{ updated: number; data: Payslip[] }>;
+    delete: (id: string) => Promise<{ id: string }>;
+    exportPdf: (
+      id: string,
+      suggestedName: string,
+      actor?: string,
+    ) => Promise<PayslipPdfExportResult>;
   };
   report: {
     options: () => Promise<ReportOptions>;

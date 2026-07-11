@@ -1,5 +1,5 @@
-import { BrowserWindow, dialog, type IpcMain } from 'electron';
-import { writeFile } from 'node:fs/promises';
+import { BrowserWindow, dialog, type IpcMain, type OpenDialogOptions } from 'electron';
+import { readFile, writeFile } from 'node:fs/promises';
 import {
   createAttendanceCorrection,
   createAttendanceRecord,
@@ -131,6 +131,20 @@ import {
   runPayroll,
   updatePayrollPeriod,
 } from './services/payroll-service';
+import {
+  deletePayslip,
+  generatePayslips,
+  getCompanyProfile,
+  getEmployeePublishedPayslip,
+  getPayslip,
+  getPayslipOptions,
+  getPayslips,
+  getPayslipSummary,
+  publishPeriodPayslips,
+  recordPayslipDownload,
+  setPayslipPublished,
+  updateCompanyProfile,
+} from './services/payslip-service';
 import {
   getBankTransferReport,
   getContributionsReport,
@@ -686,6 +700,147 @@ export function setupIpc(ipcMain: IpcMain): void {
   );
   registerHandler(ipcMain, 'payroll.employeeHistory', async (_event, filters: unknown) =>
     getEmployeePayrollHistory(filters),
+  );
+
+  registerHandler(ipcMain, 'companyProfile.get', async () =>
+    getCompanyProfile(),
+  );
+  registerHandler(ipcMain, 'companyProfile.update', async (_event, payload: unknown) =>
+    updateCompanyProfile(payload),
+  );
+  registerHandler(ipcMain, 'companyProfile.chooseLogo', async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options: OpenDialogOptions = {
+      title: 'Choose company logo',
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+    };
+    const result = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) {
+      return { selected: false };
+    }
+    const filePath = result.filePaths[0];
+    const buffer = await readFile(filePath);
+    if (buffer.byteLength > 3_000_000) {
+      throw new Error('Company logo must be smaller than 3 MB.');
+    }
+    const extension = filePath.split('.').pop()?.toLowerCase();
+    const mime = extension === 'png'
+      ? 'image/png'
+      : extension === 'webp'
+        ? 'image/webp'
+        : 'image/jpeg';
+    return {
+      selected: true,
+      fileName: filePath.split(/[\\/]/).pop() || 'company-logo',
+      dataUrl: `data:${mime};base64,${buffer.toString('base64')}`,
+    };
+  });
+
+  registerHandler(ipcMain, 'payslip.options', async () =>
+    getPayslipOptions(),
+  );
+  registerHandler(ipcMain, 'payslip.list', async (_event, filters: unknown) =>
+    getPayslips(filters),
+  );
+  registerHandler(ipcMain, 'payslip.summary', async (_event, filters: unknown) =>
+    getPayslipSummary(filters),
+  );
+  registerHandler(ipcMain, 'payslip.get', async (_event, id: unknown) =>
+    getPayslip(requireId(id, 'payslip')),
+  );
+  registerHandler(
+    ipcMain,
+    'payslip.employeeList',
+    async (_event, employeeId: unknown) =>
+      getPayslips({
+        employee_id: requireId(employeeId, 'employee'),
+        published_only: true,
+      }),
+  );
+  registerHandler(
+    ipcMain,
+    'payslip.employeeGet',
+    async (_event, id: unknown, employeeId: unknown) =>
+      getEmployeePublishedPayslip(
+        requireId(id, 'payslip'),
+        requireId(employeeId, 'employee'),
+      ),
+  );
+  registerHandler(ipcMain, 'payslip.generate', async (_event, payload: unknown) =>
+    generatePayslips(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'payslip.publish',
+    async (_event, id: unknown, actor: unknown) =>
+      setPayslipPublished(
+        requireId(id, 'payslip'),
+        true,
+        typeof actor === 'string' ? actor : 'Payroll Administrator',
+      ),
+  );
+  registerHandler(
+    ipcMain,
+    'payslip.unpublish',
+    async (_event, id: unknown, actor: unknown) =>
+      setPayslipPublished(
+        requireId(id, 'payslip'),
+        false,
+        typeof actor === 'string' ? actor : 'Payroll Administrator',
+      ),
+  );
+  registerHandler(
+    ipcMain,
+    'payslip.publishPeriod',
+    async (_event, periodId: unknown, actor: unknown) =>
+      publishPeriodPayslips(
+        requireId(periodId, 'payroll period'),
+        typeof actor === 'string' ? actor : 'Payroll Administrator',
+      ),
+  );
+  registerHandler(ipcMain, 'payslip.delete', async (_event, id: unknown) =>
+    deletePayslip(requireId(id, 'payslip')),
+  );
+  registerHandler(
+    ipcMain,
+    'payslip.exportPdf',
+    async (event, id: unknown, suggestedName: unknown, actor: unknown) => {
+      const payslipId = requireId(id, 'payslip');
+      const record = await getPayslip(payslipId);
+      if (!record) throw new Error('Payslip was not found.');
+      const requestedName = typeof suggestedName === 'string' ? suggestedName.trim() : '';
+      const baseName = (requestedName || record.reference_number || 'payslip')
+        .replace(/[^a-zA-Z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const parent = BrowserWindow.fromWebContents(event.sender);
+      const options = {
+        title: 'Save payslip as PDF',
+        defaultPath: `${baseName || 'payslip'}.pdf`,
+        filters: [{ name: 'PDF document', extensions: ['pdf'] }],
+      };
+      const result = parent
+        ? await dialog.showSaveDialog(parent, options)
+        : await dialog.showSaveDialog(options);
+      if (result.canceled || !result.filePath) {
+        return { saved: false };
+      }
+      const pdf = await event.sender.printToPDF({
+        printBackground: true,
+        landscape: false,
+        pageSize: 'A4',
+        margins: { top: 0.3, bottom: 0.3, left: 0.3, right: 0.3 },
+      });
+      await writeFile(result.filePath, pdf);
+      await recordPayslipDownload(
+        payslipId,
+        typeof actor === 'string' && actor.trim() ? actor.trim() : 'Payroll User',
+        result.filePath,
+      );
+      return { saved: true, filePath: result.filePath };
+    },
   );
 
   registerHandler(ipcMain, 'report.options', async () =>

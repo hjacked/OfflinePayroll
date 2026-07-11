@@ -147,6 +147,28 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id) => ipcRenderer.invoke('contributionRecord.delete', id),
   },
 
+  companyProfile: {
+    get: () => ipcRenderer.invoke('companyProfile.get'),
+    update: (payload) => ipcRenderer.invoke('companyProfile.update', payload),
+    chooseLogo: () => ipcRenderer.invoke('companyProfile.chooseLogo'),
+  },
+
+  payslip: {
+    options: () => ipcRenderer.invoke('payslip.options'),
+    list: (filters) => ipcRenderer.invoke('payslip.list', filters),
+    summary: (filters) => ipcRenderer.invoke('payslip.summary', filters),
+    get: (id) => ipcRenderer.invoke('payslip.get', id),
+    employeeList: (employeeId) => ipcRenderer.invoke('payslip.employeeList', employeeId),
+    employeeGet: (id, employeeId) => ipcRenderer.invoke('payslip.employeeGet', id, employeeId),
+    generate: (payload) => ipcRenderer.invoke('payslip.generate', payload),
+    publish: (id, actor) => ipcRenderer.invoke('payslip.publish', id, actor),
+    unpublish: (id, actor) => ipcRenderer.invoke('payslip.unpublish', id, actor),
+    publishPeriod: (periodId, actor) => ipcRenderer.invoke('payslip.publishPeriod', periodId, actor),
+    delete: (id) => ipcRenderer.invoke('payslip.delete', id),
+    exportPdf: (id, suggestedName, actor) =>
+      ipcRenderer.invoke('payslip.exportPdf', id, suggestedName, actor),
+  },
+
   report: {
     options: () => ipcRenderer.invoke('report.options'),
     dashboard: (filters) => ipcRenderer.invoke('report.dashboard', filters),

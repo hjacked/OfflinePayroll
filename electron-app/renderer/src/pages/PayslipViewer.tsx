@@ -6,16 +6,9 @@ export default function PayslipViewer({ payslip }: { payslip?: Payslip }) {
   }
 
   return (
-    <section className="card">
-      <h2>Payslip</h2>
-      <dl className="details-list">
-        <div><dt>Gross income</dt><dd>{payslip.gross_income ?? 0}</dd></div>
-        <div><dt>Total deductions</dt><dd>{payslip.total_deductions ?? 0}</dd></div>
-        <div><dt>Net pay</dt><dd>{payslip.net_pay ?? 0}</dd></div>
-      </dl>
-      {payslip.breakdown && (
-        <pre>{JSON.stringify(payslip.breakdown, null, 2)}</pre>
-      )}
+    <section>
+      <h3>{payslip.period_name || 'Payslip'}</h3>
+      <pre>{JSON.stringify(payslip.snapshot || payslip, null, 2)}</pre>
     </section>
   );
 }

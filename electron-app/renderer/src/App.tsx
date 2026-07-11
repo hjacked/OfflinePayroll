@@ -58,6 +58,12 @@ import ContributionsReportPage from './pages/admin/reports/ContributionsReportPa
 import NetPayReportPage from './pages/admin/reports/NetPayReportPage';
 import PayrollVarianceReportPage from './pages/admin/reports/PayrollVarianceReportPage';
 import BankTransferReportPage from './pages/admin/reports/BankTransferReportPage';
+import PayslipsPage from './pages/admin/payslips/PayslipsPage';
+import PayslipGeneratePage from './pages/admin/payslips/PayslipGeneratePage';
+import PayslipPublishPage from './pages/admin/payslips/PayslipPublishPage';
+import PayslipDetailsPage from './pages/admin/payslips/PayslipDetailsPage';
+import EmployeePayslipsPage from './pages/employee/payslips/EmployeePayslipsPage';
+import EmployeePayslipDetailsPage from './pages/employee/payslips/EmployeePayslipDetailsPage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -67,6 +73,7 @@ import './deductions.css';
 import './contributions.css';
 import './payroll.css';
 import './reports.css';
+import './payslips.css';
 
 export default function App() {
   return (
@@ -133,10 +140,10 @@ export default function App() {
         <Route path="reports/net-pay" element={<NetPayReportPage />} />
         <Route path="reports/variance" element={<PayrollVarianceReportPage />} />
         <Route path="reports/bank-transfer" element={<BankTransferReportPage />} />
-        <Route
-          path="payslips"
-          element={<AdminModulePage moduleKey="payslips" />}
-        />
+        <Route path="payslips" element={<PayslipsPage />} />
+        <Route path="payslips/generate" element={<PayslipGeneratePage />} />
+        <Route path="payslips/publish" element={<PayslipPublishPage />} />
+        <Route path="payslips/:id" element={<PayslipDetailsPage />} />
         <Route
           path="settings"
           element={<AdminModulePage moduleKey="settings" />}
@@ -152,6 +159,8 @@ export default function App() {
         <Route path="deductions" element={<EmployeeDeductionsPage />} />
         <Route path="contributions" element={<EmployeeContributionsPage />} />
         <Route path="payroll-history" element={<EmployeePayrollHistoryPage />} />
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
+        <Route path="payslips/:id" element={<EmployeePayslipDetailsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

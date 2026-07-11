@@ -53,7 +53,8 @@ const portalModules: PortalModule[] = [
     title: 'Payslips',
     description:
       'View, print, and download published payslips in PDF format.',
-    status: 'Available soon',
+    status: 'Available',
+    path: '/employee/payslips',
   },
   {
     title: 'My Profile',

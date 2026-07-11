@@ -29,6 +29,7 @@ export async function initDb(): Promise<Database> {
   await seedDefaultEarningTypes(database);
   await seedDefaultDeductionTypes(database);
   await seedDefaultContributionTypes(database);
+  await seedDefaultCompanyProfile(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -776,6 +777,72 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS company_profiles (
+      id TEXT PRIMARY KEY,
+      company_name TEXT NOT NULL,
+      address TEXT,
+      contact_email TEXT,
+      contact_phone TEXT,
+      tax_id TEXT,
+      logo_data_url TEXT,
+      payslip_footer TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS payslips (
+      id TEXT PRIMARY KEY,
+      payroll_period_id TEXT NOT NULL,
+      payroll_result_id TEXT NOT NULL,
+      employee_id TEXT NOT NULL,
+      reference_number TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'draft',
+      snapshot_json TEXT NOT NULL,
+      generated_by TEXT,
+      generated_at TEXT NOT NULL,
+      published_by TEXT,
+      published_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE CASCADE,
+      FOREIGN KEY (payroll_result_id) REFERENCES payroll_employee_results(id) ON DELETE CASCADE,
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      UNIQUE (payroll_period_id, employee_id),
+      CHECK (status IN ('draft', 'published'))
+    );
+
+    CREATE TABLE IF NOT EXISTS payslip_action_logs (
+      id TEXT PRIMARY KEY,
+      payslip_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      actor TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payslip_id) REFERENCES payslips(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS payslip_download_logs (
+      id TEXT PRIMARY KEY,
+      payslip_id TEXT NOT NULL,
+      employee_id TEXT NOT NULL,
+      downloaded_by TEXT,
+      file_path TEXT,
+      downloaded_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payslip_id) REFERENCES payslips(id) ON DELETE CASCADE,
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_payslips_period_status
+      ON payslips(payroll_period_id, status, employee_id);
+    CREATE INDEX IF NOT EXISTS idx_payslips_employee_status
+      ON payslips(employee_id, status, generated_at);
+    CREATE INDEX IF NOT EXISTS idx_payslip_actions_payslip_date
+      ON payslip_action_logs(payslip_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_payslip_downloads_payslip_date
+      ON payslip_download_logs(payslip_id, downloaded_at);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(
@@ -1049,6 +1116,19 @@ export function getDb(): Database {
   }
 
   return database;
+}
+
+async function seedDefaultCompanyProfile(db: Database): Promise<void> {
+  await db.run(
+    `INSERT OR IGNORE INTO company_profiles (
+      id, company_name, address, contact_email, contact_phone,
+      tax_id, logo_data_url, payslip_footer, created_at, updated_at
+    ) VALUES (
+      'default', 'PayPayroll Offline', '', '', '', '', '',
+      'This is a system-generated payslip. Please contact HR or Payroll for questions.',
+      datetime('now'), datetime('now')
+    )`,
+  );
 }
 
 async function seedDefaultEarningTypes(db: Database): Promise<void> {
