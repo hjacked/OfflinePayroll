@@ -49,6 +49,15 @@ import PayrollPeriodFormPage from './pages/admin/payroll/PayrollPeriodFormPage';
 import PayrollPeriodsPage from './pages/admin/payroll/PayrollPeriodsPage';
 import PayrollRegisterPage from './pages/admin/payroll/PayrollRegisterPage';
 import EmployeePayrollHistoryPage from './pages/employee/payroll/EmployeePayrollHistoryPage';
+import ReportsDashboardPage from './pages/admin/reports/ReportsDashboardPage';
+import PayrollRegisterReportPage from './pages/admin/reports/PayrollRegisterReportPage';
+import PayrollSummaryReportPage from './pages/admin/reports/PayrollSummaryReportPage';
+import EarningsReportPage from './pages/admin/reports/EarningsReportPage';
+import DeductionsReportPage from './pages/admin/reports/DeductionsReportPage';
+import ContributionsReportPage from './pages/admin/reports/ContributionsReportPage';
+import NetPayReportPage from './pages/admin/reports/NetPayReportPage';
+import PayrollVarianceReportPage from './pages/admin/reports/PayrollVarianceReportPage';
+import BankTransferReportPage from './pages/admin/reports/BankTransferReportPage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -57,6 +66,7 @@ import './earnings.css';
 import './deductions.css';
 import './contributions.css';
 import './payroll.css';
+import './reports.css';
 
 export default function App() {
   return (
@@ -114,10 +124,15 @@ export default function App() {
         <Route path="payroll/:id/register" element={<PayrollRegisterPage />} />
         <Route path="payroll/:id/employees/:employeeId" element={<PayrollEmployeeResultPage />} />
         <Route path="payroll/:id" element={<PayrollPeriodDetailsPage />} />
-        <Route
-          path="reports"
-          element={<AdminModulePage moduleKey="reports" />}
-        />
+        <Route path="reports" element={<ReportsDashboardPage />} />
+        <Route path="reports/payroll-register" element={<PayrollRegisterReportPage />} />
+        <Route path="reports/payroll-summary" element={<PayrollSummaryReportPage />} />
+        <Route path="reports/earnings" element={<EarningsReportPage />} />
+        <Route path="reports/deductions" element={<DeductionsReportPage />} />
+        <Route path="reports/contributions" element={<ContributionsReportPage />} />
+        <Route path="reports/net-pay" element={<NetPayReportPage />} />
+        <Route path="reports/variance" element={<PayrollVarianceReportPage />} />
+        <Route path="reports/bank-transfer" element={<BankTransferReportPage />} />
         <Route
           path="payslips"
           element={<AdminModulePage moduleKey="payslips" />}

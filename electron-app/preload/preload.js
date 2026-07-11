@@ -147,6 +147,20 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id) => ipcRenderer.invoke('contributionRecord.delete', id),
   },
 
+  report: {
+    options: () => ipcRenderer.invoke('report.options'),
+    dashboard: (filters) => ipcRenderer.invoke('report.dashboard', filters),
+    payrollRegister: (filters) => ipcRenderer.invoke('report.payrollRegister', filters),
+    payrollSummary: (filters) => ipcRenderer.invoke('report.payrollSummary', filters),
+    earnings: (filters) => ipcRenderer.invoke('report.earnings', filters),
+    deductions: (filters) => ipcRenderer.invoke('report.deductions', filters),
+    contributions: (filters) => ipcRenderer.invoke('report.contributions', filters),
+    netPay: (filters) => ipcRenderer.invoke('report.netPay', filters),
+    variance: (payload) => ipcRenderer.invoke('report.variance', payload),
+    bankTransfer: (filters) => ipcRenderer.invoke('report.bankTransfer', filters),
+    exportPdf: (suggestedName) => ipcRenderer.invoke('report.exportPdf', suggestedName),
+  },
+
   payroll: {
     list: (filters) => ipcRenderer.invoke('payroll.list', filters),
     get: (id) => ipcRenderer.invoke('payroll.get', id),

@@ -87,6 +87,20 @@ import type {
   PayrollRegister,
   PayrollWorkflowStatus,
 } from './models/PayrollPeriod';
+import type {
+  BankTransferReport,
+  ContributionReport,
+  LineItemReport,
+  NetPayReport,
+  PayrollRegisterReport,
+  PayrollSummaryReport,
+  PayrollVarianceInput,
+  PayrollVarianceReport,
+  PdfExportResult,
+  ReportFilters,
+  ReportOptions,
+  ReportsDashboardData,
+} from './models/Reports';
 
 export interface PayrollApi {
   employee: {
@@ -265,6 +279,19 @@ export interface PayrollApi {
     create: (payload: ContributionRecordInput) => Promise<ContributionRecord>;
     setStatus: (id: string, status: ContributionRecordStatus) => Promise<ContributionRecord>;
     delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
+  };
+  report: {
+    options: () => Promise<ReportOptions>;
+    dashboard: (filters?: ReportFilters) => Promise<ReportsDashboardData>;
+    payrollRegister: (filters?: ReportFilters) => Promise<PayrollRegisterReport>;
+    payrollSummary: (filters?: ReportFilters) => Promise<PayrollSummaryReport>;
+    earnings: (filters?: ReportFilters) => Promise<LineItemReport>;
+    deductions: (filters?: ReportFilters) => Promise<LineItemReport>;
+    contributions: (filters?: ReportFilters) => Promise<ContributionReport>;
+    netPay: (filters?: ReportFilters) => Promise<NetPayReport>;
+    variance: (payload: PayrollVarianceInput) => Promise<PayrollVarianceReport>;
+    bankTransfer: (filters: ReportFilters) => Promise<BankTransferReport>;
+    exportPdf: (suggestedName: string) => Promise<PdfExportResult>;
   };
   payroll: {
     list: (filters?: {

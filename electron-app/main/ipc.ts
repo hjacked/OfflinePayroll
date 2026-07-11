@@ -1,4 +1,5 @@
-import type { IpcMain } from 'electron';
+import { BrowserWindow, dialog, type IpcMain } from 'electron';
+import { writeFile } from 'node:fs/promises';
 import {
   createAttendanceCorrection,
   createAttendanceRecord,
@@ -130,6 +131,18 @@ import {
   runPayroll,
   updatePayrollPeriod,
 } from './services/payroll-service';
+import {
+  getBankTransferReport,
+  getContributionsReport,
+  getDeductionsReport,
+  getEarningsReport,
+  getNetPayReport,
+  getPayrollRegisterReport,
+  getPayrollSummaryReport,
+  getPayrollVarianceReport,
+  getReportOptions,
+  getReportsDashboard,
+} from './services/reports-service';
 
 export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'employee.list', async (_event, filters: unknown) =>
@@ -674,6 +687,63 @@ export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'payroll.employeeHistory', async (_event, filters: unknown) =>
     getEmployeePayrollHistory(filters),
   );
+
+  registerHandler(ipcMain, 'report.options', async () =>
+    getReportOptions(),
+  );
+  registerHandler(ipcMain, 'report.dashboard', async (_event, filters: unknown) =>
+    getReportsDashboard(filters),
+  );
+  registerHandler(ipcMain, 'report.payrollRegister', async (_event, filters: unknown) =>
+    getPayrollRegisterReport(filters),
+  );
+  registerHandler(ipcMain, 'report.payrollSummary', async (_event, filters: unknown) =>
+    getPayrollSummaryReport(filters),
+  );
+  registerHandler(ipcMain, 'report.earnings', async (_event, filters: unknown) =>
+    getEarningsReport(filters),
+  );
+  registerHandler(ipcMain, 'report.deductions', async (_event, filters: unknown) =>
+    getDeductionsReport(filters),
+  );
+  registerHandler(ipcMain, 'report.contributions', async (_event, filters: unknown) =>
+    getContributionsReport(filters),
+  );
+  registerHandler(ipcMain, 'report.netPay', async (_event, filters: unknown) =>
+    getNetPayReport(filters),
+  );
+  registerHandler(ipcMain, 'report.variance', async (_event, payload: unknown) =>
+    getPayrollVarianceReport(payload),
+  );
+  registerHandler(ipcMain, 'report.bankTransfer', async (_event, filters: unknown) =>
+    getBankTransferReport(filters),
+  );
+  registerHandler(ipcMain, 'report.exportPdf', async (event, suggestedName: unknown) => {
+    const baseName = typeof suggestedName === 'string' && suggestedName.trim()
+      ? suggestedName.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '')
+      : 'payroll-report';
+    const defaultPath = `${baseName || 'payroll-report'}.pdf`;
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      title: 'Save payroll report as PDF',
+      defaultPath,
+      filters: [{ name: 'PDF document', extensions: ['pdf'] }],
+    };
+    const result = parent
+      ? await dialog.showSaveDialog(parent, options)
+      : await dialog.showSaveDialog(options);
+    if (result.canceled || !result.filePath) {
+      return { saved: false };
+    }
+    const pdf = await event.sender.printToPDF({
+      printBackground: true,
+      landscape: true,
+      pageSize: 'A4',
+      margins: { top: 0.35, bottom: 0.35, left: 0.35, right: 0.35 },
+    });
+    await writeFile(result.filePath, pdf);
+    return { saved: true, filePath: result.filePath };
+  });
 
   // Legacy Phase A endpoint.
   registerHandler(ipcMain, 'payroll.run', async (_event, periodId: unknown) =>
