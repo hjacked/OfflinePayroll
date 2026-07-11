@@ -50,3 +50,8 @@
 .settings-audit-list span, .settings-audit-list p, .settings-audit-list time { color: #65758d; margin: 0; font-size: 13px; }
 .settings-empty, .settings-loading { padding: 30px; text-align: center; color: #667790; }
 @media (max-width: 820px) { .settings-form-grid, .settings-stat-grid { grid-template-columns: 1fr; } .settings-audit-list article { grid-template-columns: 1fr; gap: 5px; } }
+
+.settings-save-bar--split {
+  justify-content: space-between;
+  gap: 12px;
+}

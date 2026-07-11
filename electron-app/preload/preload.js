@@ -198,6 +198,19 @@ contextBridge.exposeInMainWorld('api', {
     chooseBackupDirectory: () => ipcRenderer.invoke('settings.chooseBackupDirectory'),
   },
 
+
+  backup: {
+    overview: () => ipcRenderer.invoke('backup.overview'),
+    create: (notes) => ipcRenderer.invoke('backup.create', notes),
+    integrity: () => ipcRenderer.invoke('backup.integrity'),
+    validate: (id) => ipcRenderer.invoke('backup.validate', id),
+    validateExternal: (filePath) => ipcRenderer.invoke('backup.validateExternal', filePath),
+    delete: (id) => ipcRenderer.invoke('backup.delete', id),
+    chooseRestoreFile: () => ipcRenderer.invoke('backup.chooseRestoreFile'),
+    restore: (filePath, notes) => ipcRenderer.invoke('backup.restore', filePath, notes),
+    reveal: (filePath) => ipcRenderer.invoke('backup.reveal', filePath),
+  },
+
   companyProfile: {
     get: () => ipcRenderer.invoke('companyProfile.get'),
     update: (payload) => ipcRenderer.invoke('companyProfile.update', payload),

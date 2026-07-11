@@ -121,6 +121,13 @@ import type {
   SettingsBundle,
 } from './models/Settings';
 import type {
+  BackupCreationResult,
+  BackupFileSelection,
+  BackupOverview,
+  IntegrityResult,
+  RestoreResult,
+} from './models/Backup';
+import type {
   BankTransferReport,
   ContributionReport,
   LineItemReport,
@@ -364,6 +371,20 @@ export interface PayrollApi {
     updateBackup: (payload: BackupPolicy) => Promise<BackupPolicy>;
     audit: (limit?: number) => Promise<SettingsAuditLog[]>;
     chooseBackupDirectory: () => Promise<BackupDirectorySelection>;
+  };
+  backup: {
+    overview: () => Promise<BackupOverview>;
+    create: (notes?: string) => Promise<BackupCreationResult>;
+    integrity: () => Promise<IntegrityResult>;
+    validate: (id: string) => Promise<IntegrityResult>;
+    validateExternal: (filePath: string) => Promise<IntegrityResult>;
+    delete: (id: string) => Promise<{ id: string; deleted: true }>;
+    chooseRestoreFile: () => Promise<BackupFileSelection>;
+    restore: (
+      filePath: string,
+      notes?: string,
+    ) => Promise<RestoreResult | { restored: false; cancelled: true }>;
+    reveal: (filePath: string) => Promise<{ revealed: true }>;
   };
   companyProfile: {
     get: () => Promise<CompanyProfile>;

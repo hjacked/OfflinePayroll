@@ -942,6 +942,64 @@ async function ensureSchema(db: Database): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_settings_audit_created
       ON settings_audit_logs(created_at DESC, category);
+
+    CREATE TABLE IF NOT EXISTS backup_history (
+      id TEXT PRIMARY KEY,
+      file_name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      backup_kind TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'completed',
+      size_bytes INTEGER NOT NULL DEFAULT 0,
+      checksum_sha256 TEXT NOT NULL DEFAULT '',
+      integrity_result TEXT NOT NULL DEFAULT '',
+      include_audit_logs INTEGER NOT NULL DEFAULT 1,
+      actor_id TEXT,
+      actor_name TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      validated_at TEXT,
+      FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+      CHECK (backup_kind IN ('manual', 'automatic', 'safety')),
+      CHECK (status IN ('completed', 'failed', 'deleted')),
+      CHECK (size_bytes >= 0),
+      CHECK (include_audit_logs IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS backup_restore_logs (
+      id TEXT PRIMARY KEY,
+      source_path TEXT NOT NULL,
+      source_checksum_sha256 TEXT NOT NULL DEFAULT '',
+      safety_backup_path TEXT NOT NULL DEFAULT '',
+      actor_id TEXT,
+      actor_name TEXT,
+      status TEXT NOT NULL,
+      message TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+      CHECK (status IN ('completed', 'failed'))
+    );
+
+    CREATE TABLE IF NOT EXISTS backup_audit_logs (
+      id TEXT PRIMARY KEY,
+      action TEXT NOT NULL,
+      status TEXT NOT NULL,
+      target_path TEXT NOT NULL DEFAULT '',
+      actor_id TEXT,
+      actor_name TEXT,
+      message TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+      CHECK (status IN ('completed', 'failed'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_backup_history_created
+      ON backup_history(created_at DESC, status, backup_kind);
+
+    CREATE INDEX IF NOT EXISTS idx_backup_restore_created
+      ON backup_restore_logs(created_at DESC, status);
+
+    CREATE INDEX IF NOT EXISTS idx_backup_audit_created
+      ON backup_audit_logs(created_at DESC, action, status);
   `);
 
   await db.exec(`
@@ -1210,6 +1268,21 @@ async function seedCurrentYearLeaveBalances(db: Database): Promise<void> {
       AND leave_types.track_balance = 1`,
     year,
   );
+}
+
+export async function closeDb(): Promise<void> {
+  if (!database) return;
+
+  const active = database;
+  database = null;
+
+  try {
+    await active.exec('PRAGMA wal_checkpoint(TRUNCATE);');
+  } catch {
+    // A checkpoint can fail when the database is already closing.
+  }
+
+  await active.close();
 }
 
 export function getDb(): Database {

@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, type IpcMain, type OpenDialogOptions } from 'electron';
+import { BrowserWindow, dialog, shell, type IpcMain, type OpenDialogOptions } from 'electron';
 import { readFile, writeFile } from 'node:fs/promises';
 import {
   createAttendanceCorrection,
@@ -165,6 +165,16 @@ import {
   updateCompanySettings,
   updatePayrollSettings,
 } from './services/settings-service';
+import {
+  checkCurrentDatabaseIntegrity,
+  createManualBackup,
+  deleteBackup,
+  getBackupOverview,
+  initializeBackupScheduler,
+  restoreDatabase,
+  validateExternalBackup,
+  validateManagedBackup,
+} from './services/backup-service';
 import {
   cancelSelfLeaveRequest,
   createSelfAttendanceCorrection,
@@ -811,6 +821,69 @@ export function setupIpc(ipcMain: IpcMain): void {
     return { selected: true, path: result.filePaths[0] };
   });
 
+
+  registerHandler(ipcMain, 'backup.overview', async () => getBackupOverview());
+  registerHandler(ipcMain, 'backup.create', async (_event, notes: unknown) =>
+    createManualBackup(notes),
+  );
+  registerHandler(ipcMain, 'backup.integrity', async () =>
+    checkCurrentDatabaseIntegrity(),
+  );
+  registerHandler(ipcMain, 'backup.validate', async (_event, id: unknown) =>
+    validateManagedBackup(id),
+  );
+  registerHandler(ipcMain, 'backup.validateExternal', async (_event, filePath: unknown) =>
+    validateExternalBackup(filePath),
+  );
+  registerHandler(ipcMain, 'backup.delete', async (_event, id: unknown) =>
+    deleteBackup(id),
+  );
+  registerHandler(ipcMain, 'backup.chooseRestoreFile', async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options: OpenDialogOptions = {
+      title: 'Choose a payroll database backup',
+      properties: ['openFile'],
+      filters: [
+        { name: 'SQLite database backup', extensions: ['sqlite', 'db', 'sqlite3'] },
+      ],
+    };
+    const result = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) return { selected: false };
+    return { selected: true, path: result.filePaths[0] };
+  });
+  registerHandler(
+    ipcMain,
+    'backup.restore',
+    async (event, filePath: unknown, notes: unknown) => {
+      const parent = BrowserWindow.fromWebContents(event.sender);
+      const options = {
+        type: 'warning' as const,
+        title: 'Restore payroll database',
+        message: 'Replace the current payroll database?',
+        detail:
+          'A safety backup will be created first. The application will sign you out after the restore succeeds.',
+        buttons: ['Cancel', 'Restore Database'],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+      };
+      const confirmation = parent
+        ? await dialog.showMessageBox(parent, options)
+        : await dialog.showMessageBox(options);
+      if (confirmation.response !== 1) return { restored: false, cancelled: true };
+      return restoreDatabase(filePath, notes);
+    },
+  );
+  registerHandler(ipcMain, 'backup.reveal', async (_event, filePath: unknown) => {
+    if (typeof filePath !== 'string' || !filePath.trim()) {
+      throw new Error('A backup file path is required.');
+    }
+    shell.showItemInFolder(filePath.trim());
+    return { revealed: true };
+  });
+
   registerHandler(ipcMain, 'payroll.list', async (_event, filters: unknown) =>
     getPayrollPeriods(filters),
   );
@@ -1097,6 +1170,8 @@ export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'payroll.run', async (_event, periodId: unknown) =>
     runPayroll(requireId(periodId, 'payroll period')),
   );
+
+  void initializeBackupScheduler();
 }
 
 function requireId(value: unknown, label: string): string {
@@ -1146,6 +1221,15 @@ function getChannelPermission(channel: string): string | null {
     'settings.updateBackup': 'settings:manage',
     'settings.audit': 'settings:manage',
     'settings.chooseBackupDirectory': 'settings:manage',
+    'backup.overview': 'settings:manage',
+    'backup.create': 'settings:manage',
+    'backup.integrity': 'settings:manage',
+    'backup.validate': 'settings:manage',
+    'backup.validateExternal': 'settings:manage',
+    'backup.delete': 'settings:manage',
+    'backup.chooseRestoreFile': 'settings:manage',
+    'backup.restore': 'settings:manage',
+    'backup.reveal': 'settings:manage',
     'companyProfile.get': 'payslips:view',
     'payslip.employeeList': 'payslips:view',
     'payslip.employeeGet': 'payslips:view',

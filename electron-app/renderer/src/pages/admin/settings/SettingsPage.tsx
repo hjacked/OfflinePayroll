@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { CompanyProfile } from '../../../models/Payslip';
 import type {
   BackupPolicy,
@@ -271,8 +272,11 @@ function BackupSettings({
         <label className="settings-checkbox"><input type="checkbox" checked={backup.auto_backup_enabled} onChange={(event) => onUpdate('auto_backup_enabled', event.target.checked)} /><span><strong>Enable automatic backups</strong><small>Requires a valid backup directory.</small></span></label>
         <label className="settings-checkbox"><input type="checkbox" checked={backup.include_audit_logs} onChange={(event) => onUpdate('include_audit_logs', event.target.checked)} /><span><strong>Include audit logs</strong><small>Keep security and settings history with backup metadata.</small></span></label>
       </div>
-      <div className="settings-note settings-note--warning"><strong>Configuration only:</strong> This page saves the backup policy. Actual backup creation and restoration will be added in the next system phase.</div>
-      <SaveBar saving={saving} label="Save backup policy" />
+      <div className="settings-note"><strong>Backup tools:</strong> Save this policy, then create, validate, restore, or delete backup files from the Backup and Restore workspace.</div>
+      <div className="settings-save-bar settings-save-bar--split">
+        <Link className="settings-button" to="/admin/settings/backup">Open Backup and Restore</Link>
+        <button className="settings-button settings-button--primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save backup policy'}</button>
+      </div>
     </form>
   );
 }

@@ -72,6 +72,7 @@ import LoginPage from './pages/auth/LoginPage';
 import ChangePasswordPage from './pages/account/ChangePasswordPage';
 import UserAccountsPage from './pages/admin/users/UserAccountsPage';
 import SettingsPage from './pages/admin/settings/SettingsPage';
+import BackupRestorePage from './pages/admin/settings/BackupRestorePage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -85,6 +86,7 @@ import './payslips.css';
 import './auth.css';
 import './employee-self-service.css';
 import './settings.css';
+import './backup.css';
 
 export default function App() {
   return (
@@ -189,6 +191,14 @@ export default function App() {
           element={
             <RequirePermission permission="settings:manage">
               <SettingsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="settings/backup"
+          element={
+            <RequirePermission permission="settings:manage">
+              <BackupRestorePage />
             </RequirePermission>
           }
         />
