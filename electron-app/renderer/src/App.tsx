@@ -6,10 +6,17 @@ import AdminModulePage from './pages/admin/AdminModulePage';
 import EmployeeDetailsPage from './pages/admin/employees/EmployeeDetailsPage';
 import EmployeeFormPage from './pages/admin/employees/EmployeeFormPage';
 import EmployeeListPage from './pages/admin/employees/EmployeeListPage';
+import AttendanceCorrectionsPage from './pages/admin/timekeeping/AttendanceCorrectionsPage';
+import AttendanceDetailsPage from './pages/admin/timekeeping/AttendanceDetailsPage';
+import AttendanceFormPage from './pages/admin/timekeeping/AttendanceFormPage';
+import AttendanceImportPage from './pages/admin/timekeeping/AttendanceImportPage';
+import TimekeepingPage from './pages/admin/timekeeping/TimekeepingPage';
+import WorkSchedulesPage from './pages/admin/timekeeping/WorkSchedulesPage';
 import EmployeePortal from './pages/EmployeePortal';
 import PayrollPortal from './pages/PayrollPortal';
 import './admin-shell.css';
 import './employee-management.css';
+import './timekeeping.css';
 
 export default function App() {
   return (
@@ -23,10 +30,16 @@ export default function App() {
         <Route path="employees/new" element={<EmployeeFormPage />} />
         <Route path="employees/:id" element={<EmployeeDetailsPage />} />
         <Route path="employees/:id/edit" element={<EmployeeFormPage />} />
+        <Route path="timekeeping" element={<TimekeepingPage />} />
+        <Route path="timekeeping/new" element={<AttendanceFormPage />} />
+        <Route path="timekeeping/import" element={<AttendanceImportPage />} />
+        <Route path="timekeeping/schedules" element={<WorkSchedulesPage />} />
         <Route
-          path="timekeeping"
-          element={<AdminModulePage moduleKey="timekeeping" />}
+          path="timekeeping/corrections"
+          element={<AttendanceCorrectionsPage />}
         />
+        <Route path="timekeeping/:id" element={<AttendanceDetailsPage />} />
+        <Route path="timekeeping/:id/edit" element={<AttendanceFormPage />} />
         <Route
           path="leave-management"
           element={<AdminModulePage moduleKey="leave-management" />}

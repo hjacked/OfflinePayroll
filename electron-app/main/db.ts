@@ -23,6 +23,7 @@ export async function initDb(): Promise<Database> {
   await database.exec('PRAGMA journal_mode = WAL;');
   await ensureSchema(database);
   await seedInitialData(database);
+  await seedDefaultWorkSchedule(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -76,6 +77,99 @@ async function ensureSchema(db: Database): Promise<void> {
   await migrateEmployeesTable(db);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS work_schedules (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      break_minutes INTEGER NOT NULL DEFAULT 60,
+      grace_minutes INTEGER NOT NULL DEFAULT 0,
+      standard_hours REAL NOT NULL DEFAULT 8,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (break_minutes >= 0),
+      CHECK (grace_minutes >= 0),
+      CHECK (standard_hours >= 0),
+      CHECK (is_active IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS employee_schedule_assignments (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      schedule_id TEXT NOT NULL,
+      effective_from TEXT NOT NULL,
+      effective_to TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (schedule_id) REFERENCES work_schedules(id) ON DELETE CASCADE,
+      CHECK (effective_to IS NULL OR effective_to = '' OR effective_to >= effective_from)
+    );
+
+    CREATE TABLE IF NOT EXISTS attendance_records (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      work_date TEXT NOT NULL,
+      schedule_id TEXT,
+      scheduled_time_in TEXT,
+      scheduled_time_out TEXT,
+      time_in TEXT,
+      time_out TEXT,
+      break_minutes INTEGER NOT NULL DEFAULT 0,
+      hours_worked REAL NOT NULL DEFAULT 0,
+      regular_hours REAL NOT NULL DEFAULT 0,
+      late_minutes INTEGER NOT NULL DEFAULT 0,
+      undertime_minutes INTEGER NOT NULL DEFAULT 0,
+      overtime_hours REAL NOT NULL DEFAULT 0,
+      night_diff_hours REAL NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'present',
+      source TEXT NOT NULL DEFAULT 'manual',
+      notes TEXT,
+      payroll_period_id TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      FOREIGN KEY (schedule_id) REFERENCES work_schedules(id) ON DELETE SET NULL,
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE SET NULL,
+      UNIQUE (employee_id, work_date),
+      CHECK (break_minutes >= 0),
+      CHECK (hours_worked >= 0),
+      CHECK (regular_hours >= 0),
+      CHECK (late_minutes >= 0),
+      CHECK (undertime_minutes >= 0),
+      CHECK (overtime_hours >= 0),
+      CHECK (night_diff_hours >= 0),
+      CHECK (status IN (
+        'present', 'absent', 'leave', 'rest-day', 'holiday',
+        'official-business', 'work-from-home', 'incomplete'
+      )),
+      CHECK (source IN ('manual', 'csv-import', 'biometric', 'employee-correction'))
+    );
+
+    CREATE TABLE IF NOT EXISTS attendance_corrections (
+      id TEXT PRIMARY KEY,
+      attendance_id TEXT,
+      employee_id TEXT NOT NULL,
+      work_date TEXT NOT NULL,
+      requested_time_in TEXT,
+      requested_time_out TEXT,
+      requested_status TEXT NOT NULL DEFAULT 'present',
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      reviewer_notes TEXT,
+      reviewed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (attendance_id) REFERENCES attendance_records(id) ON DELETE SET NULL,
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+      CHECK (requested_status IN (
+        'present', 'absent', 'leave', 'rest-day', 'holiday',
+        'official-business', 'work-from-home', 'incomplete'
+      )),
+      CHECK (status IN ('pending', 'approved', 'rejected'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_employees_email
       ON employees(email);
 
@@ -91,6 +185,24 @@ async function ensureSchema(db: Database): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_payroll_periods_dates
       ON payroll_periods(start_date, end_date);
+
+    CREATE INDEX IF NOT EXISTS idx_work_schedules_active
+      ON work_schedules(is_active, name);
+
+    CREATE INDEX IF NOT EXISTS idx_schedule_assignments_employee_dates
+      ON employee_schedule_assignments(employee_id, effective_from, effective_to);
+
+    CREATE INDEX IF NOT EXISTS idx_attendance_work_date
+      ON attendance_records(work_date);
+
+    CREATE INDEX IF NOT EXISTS idx_attendance_employee_date
+      ON attendance_records(employee_id, work_date);
+
+    CREATE INDEX IF NOT EXISTS idx_attendance_status_date
+      ON attendance_records(status, work_date);
+
+    CREATE INDEX IF NOT EXISTS idx_corrections_status_date
+      ON attendance_corrections(status, work_date);
   `);
 
   await db.exec(`
@@ -222,6 +334,31 @@ async function seedInitialData(db: Database): Promise<void> {
     await db.exec('ROLLBACK;');
     throw error;
   }
+}
+
+async function seedDefaultWorkSchedule(db: Database): Promise<void> {
+  const existing = await db.get<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM work_schedules;',
+  );
+
+  if ((existing?.count ?? 0) > 0) {
+    return;
+  }
+
+  await db.run(
+    `INSERT INTO work_schedules (
+      id, name, start_time, end_time, break_minutes, grace_minutes,
+      standard_hours, is_active, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+    'schedule_default_day',
+    'Regular Day Shift',
+    '08:00',
+    '17:00',
+    60,
+    5,
+    8,
+    1,
+  );
 }
 
 export function getDb(): Database {

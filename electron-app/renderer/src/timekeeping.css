@@ -1,0 +1,635 @@
+.timekeeping-page {
+  display: grid;
+  gap: 20px;
+}
+
+.timekeeping-heading {
+  align-items: center;
+}
+
+.timekeeping-heading__actions,
+.timekeeping-toolbar__actions,
+.timekeeping-form-actions,
+.timekeeping-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.timekeeping-primary-link,
+.timekeeping-secondary-link,
+.timekeeping-primary-button,
+.timekeeping-secondary-button,
+.timekeeping-danger-button,
+.timekeeping-link-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.timekeeping-primary-link,
+.timekeeping-primary-button {
+  border: 1px solid #d99b28;
+  background: #f2b84b;
+  color: #172033;
+}
+
+.timekeeping-primary-link:hover,
+.timekeeping-primary-button:hover {
+  background: #e9a932;
+}
+
+.timekeeping-secondary-link,
+.timekeeping-secondary-button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.timekeeping-secondary-link:hover,
+.timekeeping-secondary-button:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.timekeeping-danger-button {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
+.timekeeping-primary-button:disabled,
+.timekeeping-secondary-button:disabled,
+.timekeeping-danger-button:disabled,
+.timekeeping-link-button:disabled,
+.timekeeping-row-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.timekeeping-alert {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.timekeeping-alert--error {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.timekeeping-alert--success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.timekeeping-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.timekeeping-summary-card {
+  display: grid;
+  gap: 5px;
+  min-height: 88px;
+  padding: 15px;
+  border: 1px solid #dbe2ea;
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 4%);
+}
+
+.timekeeping-summary-card span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.timekeeping-summary-card strong {
+  color: #0f172a;
+  font-size: 25px;
+}
+
+.timekeeping-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(180px, 1fr) 160px 150px 150px auto;
+  gap: 10px;
+  align-items: end;
+  padding: 15px;
+  border: 1px solid #dbe2ea;
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 4%);
+}
+
+.timekeeping-field {
+  display: grid;
+  gap: 6px;
+}
+
+.timekeeping-field--wide {
+  grid-column: 1 / -1;
+}
+
+.timekeeping-field--inline {
+  width: 180px;
+}
+
+.timekeeping-field > span,
+.timekeeping-checkbox span {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.timekeeping-field em {
+  color: #b91c1c;
+  font-style: normal;
+}
+
+.timekeeping-field input,
+.timekeeping-field select,
+.timekeeping-field textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.timekeeping-field input,
+.timekeeping-field select {
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.timekeeping-field textarea {
+  min-height: 86px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.timekeeping-field input:focus,
+.timekeeping-field select:focus,
+.timekeeping-field textarea:focus {
+  border-color: #d99b28;
+  box-shadow: 0 0 0 3px rgb(242 184 75 / 18%);
+}
+
+.timekeeping-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.timekeeping-checkbox input {
+  width: 16px;
+  height: 16px;
+}
+
+.timekeeping-table-card,
+.timekeeping-form-section,
+.timekeeping-detail-section,
+.timekeeping-profile-card,
+.timekeeping-import-card,
+.timekeeping-import-errors,
+.timekeeping-danger-zone {
+  border: 1px solid #dbe2ea;
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 4%);
+}
+
+.timekeeping-table-card {
+  overflow: hidden;
+}
+
+.timekeeping-table-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.timekeeping-table-card__header--filter {
+  align-items: end;
+}
+
+.timekeeping-table-card__header h3,
+.timekeeping-form-section__heading h3,
+.timekeeping-detail-section h3,
+.timekeeping-import-card h3,
+.timekeeping-import-errors h3,
+.timekeeping-danger-zone h3,
+.timekeeping-profile-card h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.timekeeping-table-card__header p,
+.timekeeping-form-section__heading p,
+.timekeeping-import-card p,
+.timekeeping-danger-zone p,
+.timekeeping-profile-card p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.timekeeping-table-wrap {
+  overflow-x: auto;
+}
+
+.timekeeping-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+}
+
+.timekeeping-table--compact {
+  min-width: 820px;
+}
+
+.timekeeping-table th,
+.timekeeping-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8edf3;
+  color: #334155;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.timekeeping-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.timekeeping-table tbody tr:hover {
+  background: #fbfcfe;
+}
+
+.timekeeping-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.timekeeping-table small {
+  color: #64748b;
+}
+
+.timekeeping-employee-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 150px;
+}
+
+.timekeeping-employee-cell strong {
+  color: #0f172a;
+}
+
+.timekeeping-employee-cell span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.timekeeping-status,
+.timekeeping-review-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.timekeeping-status--present,
+.timekeeping-status--official-business,
+.timekeeping-status--work-from-home,
+.timekeeping-review-status--approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.timekeeping-status--absent,
+.timekeeping-review-status--rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.timekeeping-status--leave,
+.timekeeping-status--holiday,
+.timekeeping-status--rest-day {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.timekeeping-status--incomplete,
+.timekeeping-review-status--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.timekeeping-row-actions a,
+.timekeeping-row-actions button,
+.timekeeping-link-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #3b5f8a;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.timekeeping-row-actions a:hover,
+.timekeeping-row-actions button:hover,
+.timekeeping-link-button:hover {
+  text-decoration: underline;
+}
+
+.timekeeping-row-actions__danger,
+.timekeeping-link-button--danger {
+  color: #b91c1c !important;
+}
+
+.timekeeping-empty-state {
+  padding: 36px 20px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.timekeeping-form {
+  display: grid;
+  gap: 18px;
+}
+
+.timekeeping-form-section {
+  padding: 18px;
+}
+
+.timekeeping-form-section__heading {
+  margin-bottom: 16px;
+}
+
+.timekeeping-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.timekeeping-form-grid--correction {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.timekeeping-form-actions {
+  justify-content: flex-end;
+}
+
+.timekeeping-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.timekeeping-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+}
+
+.timekeeping-profile-card__code {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.timekeeping-profile-card h3 {
+  margin-top: 5px;
+  font-size: 20px;
+}
+
+.timekeeping-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.timekeeping-detail-section {
+  padding: 18px;
+}
+
+.timekeeping-detail-section--wide {
+  grid-column: 1 / -1;
+}
+
+.timekeeping-detail-section dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin: 16px 0 0;
+}
+
+.timekeeping-detail-section dl > div {
+  display: grid;
+  gap: 4px;
+}
+
+.timekeeping-detail--wide {
+  grid-column: 1 / -1;
+}
+
+.timekeeping-detail-section dt {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.timekeeping-detail-section dd {
+  margin: 0;
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.timekeeping-danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 18px;
+  border-color: #fecaca;
+}
+
+.timekeeping-import-card,
+.timekeeping-import-errors {
+  padding: 18px;
+}
+
+.timekeeping-import-card code {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+}
+
+.timekeeping-file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.timekeeping-file-picker > span {
+  padding: 9px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.timekeeping-file-picker input {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.timekeeping-import-card small {
+  display: block;
+  margin-top: 10px;
+  color: #64748b;
+}
+
+.timekeeping-import-errors {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+
+.timekeeping-import-errors ul {
+  max-height: 260px;
+  margin: 12px 0 0;
+  overflow: auto;
+  color: #9f1239;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.timekeeping-reason-cell {
+  max-width: 250px;
+  white-space: normal;
+}
+
+.timekeeping-review-status + small {
+  display: block;
+  max-width: 180px;
+  margin-top: 5px;
+  color: #64748b;
+  white-space: normal;
+}
+
+@media (max-width: 1180px) {
+  .timekeeping-toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .timekeeping-field--search {
+    grid-column: span 2;
+  }
+
+  .timekeeping-toolbar__actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 900px) {
+  .timekeeping-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .timekeeping-two-column,
+  .timekeeping-detail-grid,
+  .timekeeping-form-grid,
+  .timekeeping-form-grid--correction {
+    grid-template-columns: 1fr;
+  }
+
+  .timekeeping-field--wide,
+  .timekeeping-detail-section--wide,
+  .timekeeping-detail--wide {
+    grid-column: auto;
+  }
+
+  .timekeeping-heading,
+  .timekeeping-profile-card,
+  .timekeeping-danger-zone {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 680px) {
+  .timekeeping-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .timekeeping-field--search {
+    grid-column: auto;
+  }
+
+  .timekeeping-heading__actions,
+  .timekeeping-toolbar__actions,
+  .timekeeping-form-actions {
+    width: 100%;
+  }
+
+  .timekeeping-primary-link,
+  .timekeeping-secondary-link,
+  .timekeeping-primary-button,
+  .timekeeping-secondary-button {
+    flex: 1 1 auto;
+  }
+
+  .timekeeping-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

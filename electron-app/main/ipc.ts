@@ -1,5 +1,24 @@
 import type { IpcMain } from 'electron';
 import {
+  createAttendanceCorrection,
+  createAttendanceRecord,
+  createWorkSchedule,
+  deleteAttendanceRecord,
+  deleteScheduleAssignment,
+  deleteWorkSchedule,
+  getAttendanceCorrections,
+  getAttendanceRecord,
+  getAttendanceRecords,
+  getAttendanceSummary,
+  getScheduleAssignments,
+  getWorkSchedules,
+  importAttendanceRows,
+  reviewAttendanceCorrection,
+  assignWorkSchedule,
+  updateAttendanceRecord,
+  updateWorkSchedule,
+} from './services/attendance-service';
+import {
   createEmployee,
   deleteEmployee,
   getAllEmployees,
@@ -18,7 +37,7 @@ export function setupIpc(ipcMain: IpcMain): void {
   );
 
   registerHandler(ipcMain, 'employee.get', async (_event, id: unknown) => {
-    return getEmployee(requireEmployeeId(id));
+    return getEmployee(requireId(id, 'employee'));
   });
 
   registerHandler(ipcMain, 'employee.create', async (_event, payload: unknown) => {
@@ -29,7 +48,7 @@ export function setupIpc(ipcMain: IpcMain): void {
     ipcMain,
     'employee.update',
     async (_event, id: unknown, payload: unknown) => {
-      return updateEmployee(requireEmployeeId(id), payload);
+      return updateEmployee(requireId(id, 'employee'), payload);
     },
   );
 
@@ -40,13 +59,97 @@ export function setupIpc(ipcMain: IpcMain): void {
       if (typeof active !== 'boolean') {
         throw new Error('Employee status must be true or false.');
       }
-      return setEmployeeStatus(requireEmployeeId(id), active);
+      return setEmployeeStatus(requireId(id, 'employee'), active);
     },
   );
 
   registerHandler(ipcMain, 'employee.delete', async (_event, id: unknown) => {
-    return deleteEmployee(requireEmployeeId(id));
+    return deleteEmployee(requireId(id, 'employee'));
   });
+
+  registerHandler(ipcMain, 'attendance.list', async (_event, filters: unknown) =>
+    getAttendanceRecords(filters),
+  );
+
+  registerHandler(ipcMain, 'attendance.get', async (_event, id: unknown) =>
+    getAttendanceRecord(requireId(id, 'attendance record')),
+  );
+
+  registerHandler(ipcMain, 'attendance.summary', async (_event, filters: unknown) =>
+    getAttendanceSummary(filters),
+  );
+
+  registerHandler(ipcMain, 'attendance.create', async (_event, payload: unknown) =>
+    createAttendanceRecord(payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'attendance.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateAttendanceRecord(requireId(id, 'attendance record'), payload),
+  );
+
+  registerHandler(ipcMain, 'attendance.delete', async (_event, id: unknown) =>
+    deleteAttendanceRecord(requireId(id, 'attendance record')),
+  );
+
+  registerHandler(ipcMain, 'attendance.import', async (_event, rows: unknown) =>
+    importAttendanceRows(rows),
+  );
+
+  registerHandler(ipcMain, 'schedule.list', async (_event, filters: unknown) =>
+    getWorkSchedules(filters),
+  );
+
+  registerHandler(ipcMain, 'schedule.create', async (_event, payload: unknown) =>
+    createWorkSchedule(payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'schedule.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateWorkSchedule(requireId(id, 'work schedule'), payload),
+  );
+
+  registerHandler(ipcMain, 'schedule.delete', async (_event, id: unknown) =>
+    deleteWorkSchedule(requireId(id, 'work schedule')),
+  );
+
+  registerHandler(ipcMain, 'schedule.assignments', async (_event, filters: unknown) =>
+    getScheduleAssignments(filters),
+  );
+
+  registerHandler(ipcMain, 'schedule.assign', async (_event, payload: unknown) =>
+    assignWorkSchedule(payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'schedule.unassign',
+    async (_event, id: unknown) =>
+      deleteScheduleAssignment(requireId(id, 'schedule assignment')),
+  );
+
+  registerHandler(
+    ipcMain,
+    'attendanceCorrection.list',
+    async (_event, filters: unknown) => getAttendanceCorrections(filters),
+  );
+
+  registerHandler(
+    ipcMain,
+    'attendanceCorrection.create',
+    async (_event, payload: unknown) => createAttendanceCorrection(payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'attendanceCorrection.review',
+    async (_event, id: unknown, payload: unknown) =>
+      reviewAttendanceCorrection(requireId(id, 'attendance correction'), payload),
+  );
 
   registerHandler(
     ipcMain,
@@ -62,9 +165,9 @@ export function setupIpc(ipcMain: IpcMain): void {
   });
 }
 
-function requireEmployeeId(value: unknown): string {
+function requireId(value: unknown, label: string): string {
   if (typeof value !== 'string' || !value.trim()) {
-    throw new Error('A valid employee ID is required.');
+    throw new Error(`A valid ${label} ID is required.`);
   }
   return value.trim();
 }
