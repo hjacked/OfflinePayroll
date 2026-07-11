@@ -843,6 +843,58 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      display_name TEXT NOT NULL,
+      email TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL,
+      employee_id TEXT,
+      password_hash TEXT NOT NULL,
+      password_salt TEXT NOT NULL,
+      password_iterations INTEGER NOT NULL DEFAULT 310000,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      must_change_password INTEGER NOT NULL DEFAULT 1,
+      failed_attempts INTEGER NOT NULL DEFAULT 0,
+      locked_until TEXT,
+      last_login_at TEXT,
+      password_changed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE SET NULL,
+      CHECK (role IN ('administrator', 'hr_officer', 'payroll_officer', 'supervisor', 'employee')),
+      CHECK (is_active IN (0, 1)),
+      CHECK (must_change_password IN (0, 1)),
+      CHECK (failed_attempts >= 0),
+      CHECK (password_iterations >= 100000)
+    );
+
+    CREATE TABLE IF NOT EXISTS auth_audit_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      username TEXT NOT NULL,
+      action TEXT NOT NULL,
+      details TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_unique
+      ON users(employee_id)
+      WHERE employee_id IS NOT NULL AND trim(employee_id) <> '';
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique
+      ON users(lower(email))
+      WHERE trim(email) <> '';
+
+    CREATE INDEX IF NOT EXISTS idx_users_role_active
+      ON users(role, is_active, display_name);
+
+    CREATE INDEX IF NOT EXISTS idx_auth_audit_created
+      ON auth_audit_logs(created_at DESC, action);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(

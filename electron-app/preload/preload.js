@@ -1,6 +1,23 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  auth: {
+    initialize: () => ipcRenderer.invoke('auth.initialize'),
+    current: () => ipcRenderer.invoke('auth.current'),
+    login: (payload) => ipcRenderer.invoke('auth.login', payload),
+    logout: () => ipcRenderer.invoke('auth.logout'),
+    changePassword: (payload) => ipcRenderer.invoke('auth.changePassword', payload),
+  },
+  user: {
+    list: (filters) => ipcRenderer.invoke('user.list', filters),
+    get: (id) => ipcRenderer.invoke('user.get', id),
+    create: (payload) => ipcRenderer.invoke('user.create', payload),
+    update: (id, payload) => ipcRenderer.invoke('user.update', id, payload),
+    setStatus: (id, active) => ipcRenderer.invoke('user.setStatus', id, active),
+    resetPassword: (id, payload) => ipcRenderer.invoke('user.resetPassword', id, payload),
+    roles: () => ipcRenderer.invoke('user.roles'),
+    audit: (limit) => ipcRenderer.invoke('user.audit', limit),
+  },
   employee: {
     list: (filters) => ipcRenderer.invoke('employee.list', filters),
     get: (id) => ipcRenderer.invoke('employee.get', id),

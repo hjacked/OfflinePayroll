@@ -157,8 +157,51 @@ import {
   getReportOptions,
   getReportsDashboard,
 } from './services/reports-service';
+import {
+  changePassword,
+  createUser,
+  currentUser,
+  getRoleOptions,
+  getUser,
+  initializeAuth,
+  listAuthAuditLogs,
+  listUsers,
+  login,
+  logout,
+  resetUserPassword,
+  setUserStatus,
+  updateUser,
+  authorizePermission,
+} from './services/auth-service';
 
 export function setupIpc(ipcMain: IpcMain): void {
+  registerHandler(ipcMain, 'auth.initialize', async () => {
+    await initializeAuth();
+    return currentUser();
+  });
+  registerHandler(ipcMain, 'auth.current', async () => currentUser());
+  registerHandler(ipcMain, 'auth.login', async (_event, payload: unknown) => login(payload));
+  registerHandler(ipcMain, 'auth.logout', async () => logout());
+  registerHandler(ipcMain, 'auth.changePassword', async (_event, payload: unknown) =>
+    changePassword(payload),
+  );
+
+  registerHandler(ipcMain, 'user.list', async (_event, filters: unknown) => listUsers(filters));
+  registerHandler(ipcMain, 'user.get', async (_event, id: unknown) =>
+    getUser(requireId(id, 'user')),
+  );
+  registerHandler(ipcMain, 'user.create', async (_event, payload: unknown) => createUser(payload));
+  registerHandler(ipcMain, 'user.update', async (_event, id: unknown, payload: unknown) =>
+    updateUser(requireId(id, 'user'), payload),
+  );
+  registerHandler(ipcMain, 'user.setStatus', async (_event, id: unknown, active: unknown) =>
+    setUserStatus(requireId(id, 'user'), Boolean(active)),
+  );
+  registerHandler(ipcMain, 'user.resetPassword', async (_event, id: unknown, payload: unknown) =>
+    resetUserPassword(requireId(id, 'user'), payload),
+  );
+  registerHandler(ipcMain, 'user.roles', async () => getRoleOptions());
+  registerHandler(ipcMain, 'user.audit', async (_event, limit: unknown) => listAuthAuditLogs(limit));
   registerHandler(ipcMain, 'employee.list', async (_event, filters: unknown) =>
     getAllEmployees(filters),
   );
@@ -919,5 +962,90 @@ function registerHandler(
   listener: Parameters<IpcMain['handle']>[1],
 ): void {
   ipcMain.removeHandler(channel);
-  ipcMain.handle(channel, listener);
+  ipcMain.handle(channel, async (...args) => {
+    const permission = getChannelPermission(channel);
+    if (permission) await authorizePermission(permission);
+    return listener(...args);
+  });
+}
+
+function getChannelPermission(channel: string): string | null {
+  const exact: Record<string, string> = {
+    'user.get': 'users:manage',
+    'employee.create': 'employees:manage',
+    'employee.update': 'employees:manage',
+    'employee.setStatus': 'employees:manage',
+    'employee.delete': 'employees:manage',
+    'attendance.create': 'timekeeping:manage',
+    'attendance.update': 'timekeeping:manage',
+    'attendance.delete': 'timekeeping:manage',
+    'attendance.import': 'timekeeping:manage',
+    'schedule.create': 'timekeeping:manage',
+    'schedule.update': 'timekeeping:manage',
+    'schedule.delete': 'timekeeping:manage',
+    'schedule.assign': 'timekeeping:manage',
+    'schedule.unassign': 'timekeeping:manage',
+    'attendanceCorrection.review': 'timekeeping:manage',
+    'leaveType.create': 'leave:manage',
+    'leaveType.update': 'leave:manage',
+    'leaveType.delete': 'leave:manage',
+    'leaveBalance.adjust': 'leave:manage',
+    'leaveRequest.review': 'leave:manage',
+    'earningType.create': 'earnings:manage',
+    'earningType.update': 'earnings:manage',
+    'earningType.setStatus': 'earnings:manage',
+    'earningType.delete': 'earnings:manage',
+    'earningAssignment.create': 'earnings:manage',
+    'earningAssignment.update': 'earnings:manage',
+    'earningAssignment.setStatus': 'earnings:manage',
+    'earningAssignment.delete': 'earnings:manage',
+    'earningTransaction.create': 'earnings:manage',
+    'earningTransaction.update': 'earnings:manage',
+    'earningTransaction.setStatus': 'earnings:manage',
+    'earningTransaction.delete': 'earnings:manage',
+    'deductionType.create': 'deductions:manage',
+    'deductionType.update': 'deductions:manage',
+    'deductionType.setStatus': 'deductions:manage',
+    'deductionType.delete': 'deductions:manage',
+    'deductionAssignment.create': 'deductions:manage',
+    'deductionAssignment.update': 'deductions:manage',
+    'deductionAssignment.setStatus': 'deductions:manage',
+    'deductionAssignment.delete': 'deductions:manage',
+    'loan.create': 'deductions:manage',
+    'loan.update': 'deductions:manage',
+    'loan.setStatus': 'deductions:manage',
+    'loan.recordPayment': 'deductions:manage',
+    'loan.delete': 'deductions:manage',
+    'deductionTransaction.create': 'deductions:manage',
+    'deductionTransaction.update': 'deductions:manage',
+    'deductionTransaction.setStatus': 'deductions:manage',
+    'deductionTransaction.delete': 'deductions:manage',
+    'contributionType.create': 'contributions:manage',
+    'contributionType.update': 'contributions:manage',
+    'contributionType.setStatus': 'contributions:manage',
+    'contributionType.delete': 'contributions:manage',
+    'contributionTable.create': 'contributions:manage',
+    'contributionTable.update': 'contributions:manage',
+    'contributionTable.setStatus': 'contributions:manage',
+    'contributionTable.replaceBrackets': 'contributions:manage',
+    'contributionTable.delete': 'contributions:manage',
+    'contribution.calculate': 'contributions:manage',
+    'contributionRecord.create': 'contributions:manage',
+    'contributionRecord.setStatus': 'contributions:manage',
+    'contributionRecord.delete': 'contributions:manage',
+    'companyProfile.update': 'payslips:manage',
+    'companyProfile.chooseLogo': 'payslips:manage',
+    'payslip.generate': 'payslips:manage',
+    'payslip.publish': 'payslips:manage',
+    'payslip.unpublish': 'payslips:manage',
+    'payslip.publishPeriod': 'payslips:manage',
+    'payslip.delete': 'payslips:manage',
+  };
+  if (exact[channel]) return exact[channel];
+  if (channel.startsWith('report.')) return 'reports:view';
+  if (channel.startsWith('payroll.') && channel !== 'payroll.employeeHistory') return 'payroll:manage';
+  if (channel === 'payslip.list' || channel === 'payslip.summary' || channel === 'payslip.get' || channel === 'payslip.options') {
+    return 'payslips:view';
+  }
+  return null;
 }

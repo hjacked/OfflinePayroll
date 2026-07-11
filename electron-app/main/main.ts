@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { initDb } from './db';
 import { setupIpc } from './ipc';
+import { initializeAuth } from './services/auth-service';
 
 async function createWindow(): Promise<void> {
   const win = new BrowserWindow({
@@ -43,13 +44,9 @@ async function createWindow(): Promise<void> {
 
     await win.loadURL(devServerUrl);
 
-    // Uncomment during development when needed:
+    // Uncomment when debugging the renderer:
     // win.webContents.openDevTools();
   } else {
-    /*
-     * __dirname is electron-app/main while running the current
-     * TypeScript development structure, so renderer is one level up.
-     */
     await win.loadFile(
       path.join(
         __dirname,
@@ -63,6 +60,10 @@ app
   .whenReady()
   .then(async () => {
     await initDb();
+
+    // Initialize the default administrator account,
+    // authentication session storage, and security settings.
+    await initializeAuth();
 
     setupIpc(ipcMain);
 

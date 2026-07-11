@@ -1,4 +1,12 @@
 import type {
+  AuthAuditLog,
+  AuthUser,
+  LoginInput,
+  RoleOption,
+  UserAccountInput,
+  UserListFilters,
+} from './models/Auth';
+import type {
   AttendanceCorrection,
   AttendanceCorrectionInput,
   AttendanceImportResult,
@@ -113,6 +121,26 @@ import type {
 } from './models/Reports';
 
 export interface PayrollApi {
+  auth: {
+    initialize: () => Promise<AuthUser | null>;
+    current: () => Promise<AuthUser | null>;
+    login: (payload: LoginInput) => Promise<AuthUser>;
+    logout: () => Promise<{ success: true }>;
+    changePassword: (payload: {
+      current_password: string;
+      new_password: string;
+    }) => Promise<AuthUser>;
+  };
+  user: {
+    list: (filters?: UserListFilters) => Promise<{ data: AuthUser[]; total: number }>;
+    get: (id: string) => Promise<AuthUser | null>;
+    create: (payload: UserAccountInput) => Promise<AuthUser>;
+    update: (id: string, payload: UserAccountInput) => Promise<AuthUser>;
+    setStatus: (id: string, active: boolean) => Promise<AuthUser>;
+    resetPassword: (id: string, payload: { new_password: string }) => Promise<AuthUser>;
+    roles: () => Promise<RoleOption[]>;
+    audit: (limit?: number) => Promise<{ data: AuthAuditLog[]; total: number }>;
+  };
   employee: {
     list: (
       filters?: EmployeeListFilters,

@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthContext';
+import { AdminAccessBoundary, HomeRedirect, RequireAuth, RequirePermission, RequireRole } from './auth/RouteGuards';
 import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -64,6 +66,9 @@ import PayslipPublishPage from './pages/admin/payslips/PayslipPublishPage';
 import PayslipDetailsPage from './pages/admin/payslips/PayslipDetailsPage';
 import EmployeePayslipsPage from './pages/employee/payslips/EmployeePayslipsPage';
 import EmployeePayslipDetailsPage from './pages/employee/payslips/EmployeePayslipDetailsPage';
+import LoginPage from './pages/auth/LoginPage';
+import ChangePasswordPage from './pages/account/ChangePasswordPage';
+import UserAccountsPage from './pages/admin/users/UserAccountsPage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -74,13 +79,35 @@ import './contributions.css';
 import './payroll.css';
 import './reports.css';
 import './payslips.css';
+import './auth.css';
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/account/change-password"
+          element={
+            <RequireAuth>
+              <ChangePasswordPage />
+            </RequireAuth>
+          }
+        />
 
-      <Route path="/admin" element={<AdminLayout />}>
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['administrator', 'hr_officer', 'payroll_officer', 'supervisor']}>
+                <AdminAccessBoundary>
+                  <AdminLayout />
+                </AdminAccessBoundary>
+              </RequireRole>
+            </RequireAuth>
+          }
+        >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="employees" element={<EmployeeListPage />} />
@@ -145,12 +172,27 @@ export default function App() {
         <Route path="payslips/publish" element={<PayslipPublishPage />} />
         <Route path="payslips/:id" element={<PayslipDetailsPage />} />
         <Route
+          path="users"
+          element={
+            <RequirePermission permission="users:manage">
+              <UserAccountsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
           path="settings"
           element={<AdminModulePage moduleKey="settings" />}
         />
       </Route>
 
-      <Route path="/employee" element={<EmployeePortalLayout />}>
+        <Route
+          path="/employee"
+          element={
+            <RequireAuth>
+              <EmployeePortalLayout />
+            </RequireAuth>
+          }
+        >
         <Route index element={<EmployeePortal />} />
         <Route path="leave" element={<EmployeeLeavePage />} />
         <Route path="leave/new" element={<EmployeeLeaveFormPage />} />
@@ -163,7 +205,8 @@ export default function App() {
         <Route path="payslips/:id" element={<EmployeePayslipDetailsPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-    </Routes>
+        <Route path="*" element={<HomeRedirect />} />
+      </Routes>
+    </AuthProvider>
   );
 }
