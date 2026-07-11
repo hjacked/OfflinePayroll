@@ -6,7 +6,10 @@ import { open, type Database } from 'sqlite';
 let database: Database | null = null;
 
 function getDatabasePath(): string {
-  return path.join(app.getPath('userData'), 'payroll_offline.sqlite');
+  return path.join(
+    app.getPath('userData'),
+    'payroll_offline.sqlite'
+  );
 }
 
 export async function initDb(): Promise<Database> {
@@ -21,7 +24,14 @@ export async function initDb(): Promise<Database> {
 
   await database.exec('PRAGMA foreign_keys = ON;');
   await database.exec('PRAGMA journal_mode = WAL;');
+
   await ensureSchema(database);
+  await seedInitialData(database);
+
+  console.log(
+    'Payroll database initialized:',
+    getDatabasePath()
+  );
 
   return database;
 }
@@ -51,7 +61,16 @@ async function ensureSchema(db: Database): Promise<void> {
       created_by TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      CHECK (status IN ('open', 'processing', 'completed', 'locked', 'cancelled'))
+
+      CHECK (
+        status IN (
+          'open',
+          'processing',
+          'completed',
+          'locked',
+          'cancelled'
+        )
+      )
     );
 
     CREATE INDEX IF NOT EXISTS idx_employees_email
@@ -62,9 +81,80 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 }
 
+async function seedInitialData(
+  db: Database
+): Promise<void> {
+  await db.exec('BEGIN TRANSACTION;');
+
+  try {
+    await db.run(
+      `
+      INSERT OR IGNORE INTO employees (
+        id,
+        name,
+        email,
+        department,
+        role_title,
+        salary_grade,
+        bank_account,
+        password_hash,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `,
+      [
+        'EMP001',
+        'Alice Chen',
+        'alice@example.com',
+        'Finance',
+        'Payroll Lead',
+        'SG1',
+        null,
+        null,
+      ]
+    );
+
+    await db.run(
+      `
+      INSERT OR IGNORE INTO employees (
+        id,
+        name,
+        email,
+        department,
+        role_title,
+        salary_grade,
+        bank_account,
+        password_hash,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `,
+      [
+        'EMP002',
+        'Miguel Santos',
+        'miguel@example.com',
+        'Engineering',
+        'Engineer',
+        'SG2',
+        null,
+        null,
+      ]
+    );
+
+    await db.exec('COMMIT;');
+  } catch (error) {
+    await db.exec('ROLLBACK;');
+    throw error;
+  }
+}
+
 export function getDb(): Database {
   if (!database) {
-    throw new Error('Database has not been initialized. Call initDb() first.');
+    throw new Error(
+      'Database has not been initialized. Call initDb() first.'
+    );
   }
 
   return database;

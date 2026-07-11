@@ -1,26 +1,88 @@
+type PortalModule = {
+  title: string;
+  description: string;
+  status: string;
+};
+
+const portalModules: PortalModule[] = [
+  {
+    title: 'Timekeeping',
+    description:
+      'View daily attendance logs, late records, overtime, undertime, and attendance corrections.',
+    status: 'Available soon',
+  },
+  {
+    title: 'Leave Management',
+    description:
+      'View leave balances, submit leave applications, and monitor approval status.',
+    status: 'Available soon',
+  },
+  {
+    title: 'Allowances and Other Income',
+    description:
+      'Review assigned allowances, incentives, bonuses, commissions, and other earnings.',
+    status: 'Available soon',
+  },
+  {
+    title: 'Loans and Deductions',
+    description:
+      'View active loans, installment deductions, outstanding balances, and other deductions.',
+    status: 'Available soon',
+  },
+  {
+    title: 'Government Contributions',
+    description:
+      'Review employee contributions, employer shares, and statutory deduction history.',
+    status: 'Available soon',
+  },
+  {
+    title: 'Payroll History',
+    description:
+      'View previous payroll periods, gross income, deductions, and net pay.',
+    status: 'Available soon',
+  },
+  {
+    title: 'Payslips',
+    description:
+      'View, print, and download published payslips in PDF format.',
+    status: 'Available soon',
+  },
+  {
+    title: 'My Profile',
+    description:
+      'Review personal, employment, bank, and government membership information.',
+    status: 'Available soon',
+  },
+];
+
 export default function EmployeePortal() {
   return (
-    <section>
+    <section aria-labelledby="employee-portal-title">
       <div className="page-heading">
         <div>
-          <h1>Employee Portal</h1>
-          <p>View attendance, leave balances, deductions, and downloadable payslips.</p>
+          <h1 id="employee-portal-title">Employee Portal</h1>
+
+          <p>
+            View attendance, leave balances, earnings, deductions,
+            contributions, payroll history, and downloadable payslips.
+          </p>
         </div>
       </div>
 
       <div className="card-grid">
-        <article className="card">
-          <h2>Timekeeping</h2>
-          <p>Daily logs and attendance corrections will appear here.</p>
-        </article>
-        <article className="card">
-          <h2>Leave Management</h2>
-          <p>Leave credits, applications, and approval status will appear here.</p>
-        </article>
-        <article className="card">
-          <h2>Payslips</h2>
-          <p>Published payroll records and PDF downloads will appear here.</p>
-        </article>
+        {portalModules.map((module) => (
+          <article className="card" key={module.title}>
+            <div className="card-header">
+              <h2>{module.title}</h2>
+
+              <span className="status-badge">
+                {module.status}
+              </span>
+            </div>
+
+            <p>{module.description}</p>
+          </article>
+        ))}
       </div>
     </section>
   );

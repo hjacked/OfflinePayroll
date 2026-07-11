@@ -1,18 +1,15 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './styles.css';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error('The renderer root element was not found.');
-}
-
-createRoot(rootElement).render(
+ReactDOM.createRoot(
+  document.getElementById('root')!
+).render(
   <React.StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <App />
-    </HashRouter>
-  </React.StrictMode>,
+    </BrowserRouter>
+  </React.StrictMode>
 );

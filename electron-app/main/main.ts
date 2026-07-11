@@ -10,38 +10,78 @@ async function createWindow(): Promise<void> {
     minWidth: 960,
     minHeight: 640,
     show: false,
+
     webPreferences: {
-      preload: path.join(__dirname, '../preload/preload.js'),
+      preload: path.join(
+        __dirname,
+        '../preload/preload.js'
+      ),
+
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
     },
   });
 
-  win.once('ready-to-show', () => win.show());
+  win.once('ready-to-show', () => {
+    win.show();
+  });
 
-  const devServerUrl = process.env.ELECTRON_DEV_SERVER_URL;
-  if (devServerUrl) {
+  win.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription) => {
+      console.error(
+        `Renderer failed to load: ${errorCode} ${errorDescription}`
+      );
+    }
+  );
+
+  if (!app.isPackaged) {
+    const devServerUrl =
+      process.env.ELECTRON_DEV_SERVER_URL ??
+      'http://localhost:5173';
+
     await win.loadURL(devServerUrl);
+
+    // Uncomment during development when needed:
+    // win.webContents.openDevTools();
   } else {
-    await win.loadFile(path.join(__dirname, '../../renderer/dist/index.html'));
+    /*
+     * __dirname is electron-app/main while running the current
+     * TypeScript development structure, so renderer is one level up.
+     */
+    await win.loadFile(
+      path.join(
+        __dirname,
+        '../renderer/dist/index.html'
+      )
+    );
   }
 }
 
-app.whenReady().then(async () => {
-  await initDb();
-  setupIpc(ipcMain);
-  await createWindow();
+app
+  .whenReady()
+  .then(async () => {
+    await initDb();
 
-  app.on('activate', async () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      await createWindow();
-    }
+    setupIpc(ipcMain);
+
+    await createWindow();
+
+    app.on('activate', async () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        await createWindow();
+      }
+    });
+  })
+  .catch((error: unknown) => {
+    console.error(
+      'Failed to start the payroll application:',
+      error
+    );
+
+    app.quit();
   });
-}).catch((error: unknown) => {
-  console.error('Failed to start the payroll application:', error);
-  app.quit();
-});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
