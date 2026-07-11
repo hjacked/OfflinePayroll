@@ -66,6 +66,9 @@ import PayslipPublishPage from './pages/admin/payslips/PayslipPublishPage';
 import PayslipDetailsPage from './pages/admin/payslips/PayslipDetailsPage';
 import EmployeePayslipsPage from './pages/employee/payslips/EmployeePayslipsPage';
 import EmployeePayslipDetailsPage from './pages/employee/payslips/EmployeePayslipDetailsPage';
+import EmployeeTimekeepingPage from './pages/employee/timekeeping/EmployeeTimekeepingPage';
+import EmployeeAttendanceCorrectionsPage from './pages/employee/timekeeping/EmployeeAttendanceCorrectionsPage';
+import EmployeeProfilePage from './pages/employee/profile/EmployeeProfilePage';
 import LoginPage from './pages/auth/LoginPage';
 import ChangePasswordPage from './pages/account/ChangePasswordPage';
 import UserAccountsPage from './pages/admin/users/UserAccountsPage';
@@ -80,6 +83,7 @@ import './payroll.css';
 import './reports.css';
 import './payslips.css';
 import './auth.css';
+import './employee-self-service.css';
 
 export default function App() {
   return (
@@ -194,6 +198,8 @@ export default function App() {
           }
         >
         <Route index element={<EmployeePortal />} />
+        <Route path="timekeeping" element={<EmployeeTimekeepingPage />} />
+        <Route path="timekeeping/corrections" element={<EmployeeAttendanceCorrectionsPage />} />
         <Route path="leave" element={<EmployeeLeavePage />} />
         <Route path="leave/new" element={<EmployeeLeaveFormPage />} />
         <Route path="leave/:id" element={<EmployeeLeaveDetailsPage />} />
@@ -203,6 +209,7 @@ export default function App() {
         <Route path="payroll-history" element={<EmployeePayrollHistoryPage />} />
         <Route path="payslips" element={<EmployeePayslipsPage />} />
         <Route path="payslips/:id" element={<EmployeePayslipDetailsPage />} />
+        <Route path="profile" element={<EmployeeProfilePage />} />
       </Route>
 
         <Route path="*" element={<HomeRedirect />} />

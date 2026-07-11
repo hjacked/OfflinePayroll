@@ -1,78 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import type {
-  DeductionAssignment,
-  DeductionTransaction,
-  EmployeeLoan,
-} from '../../../models/Deductions';
-import type { Employee } from '../../../models/Employee';
-import { formatCurrency, formatDate, statusLabel } from '../../admin/deductions/deductions-utils';
+import { useEffect, useState } from 'react';
+import type { SelfServiceDeductions } from '../../../models/SelfService';
 
 export default function EmployeeDeductionsPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [employeeId, setEmployeeId] = useState('');
-  const [loans, setLoans] = useState<EmployeeLoan[]>([]);
-  const [assignments, setAssignments] = useState<DeductionAssignment[]>([]);
-  const [transactions, setTransactions] = useState<DeductionTransaction[]>([]);
+  const [data, setData] = useState<SelfServiceDeductions | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const result = await window.api.employee.list({ status: 'active' });
-        setEmployees(result.data);
-        if (result.data[0]) setEmployeeId(result.data[0].id);
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Unable to load employees.');
-      }
-    })();
+    void window.api.selfService.deductions().then(setData).catch((reason: unknown) => {
+      setError(reason instanceof Error ? reason.message : 'Unable to load your deductions.');
+    }).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (!employeeId) return;
-    void (async () => {
-      try {
-        const [loanResult, assignmentResult, transactionResult] = await Promise.all([
-          window.api.loan.list({ employee_id: employeeId, status: 'all' }),
-          window.api.deductionAssignment.list({ employee_id: employeeId, include_inactive: false }),
-          window.api.deductionTransaction.list({ employee_id: employeeId, status: 'all' }),
-        ]);
-        setLoans(loanResult.data);
-        setAssignments(assignmentResult.data);
-        setTransactions(transactionResult.data);
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Unable to load deductions.');
-      }
-    })();
-  }, [employeeId]);
-
-  const outstanding = useMemo(() => loans
-    .filter((loan) => loan.status === 'active' || loan.status === 'suspended' || loan.status === 'draft')
-    .reduce((total, loan) => total + loan.outstanding_balance, 0), [loans]);
-
-  return (
-    <section className="deductions-page">
-      <div className="deductions-heading">
-        <div><span>Employee self-service</span><h2>My Loans and Deductions</h2><p>Review recurring deductions, loan balances, and deduction history.</p></div>
-        <label className="deductions-field"><span>Employee</span><select value={employeeId} onChange={(event) => setEmployeeId(event.target.value)}>{employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.employee_number} — {employee.name}</option>)}</select></label>
-      </div>
-      {error && <div className="deductions-alert deductions-alert--error">{error}</div>}
-      <div className="deductions-summary-grid">
-        <article className="deductions-summary-card"><span>Outstanding loans</span><strong>{formatCurrency(outstanding)}</strong><small>{loans.filter((loan) => loan.status === 'active').length} active loans</small></article>
-        <article className="deductions-summary-card"><span>Recurring deductions</span><strong>{assignments.length}</strong><small>active assignments</small></article>
-        <article className="deductions-summary-card"><span>Approved history</span><strong>{formatCurrency(transactions.filter((item) => item.status === 'approved').reduce((sum, item) => sum + item.amount, 0))}</strong><small>recorded deductions</small></article>
-      </div>
-      <div className="deductions-table-card">
-        <div className="deductions-table-card__header"><div><h3>Employee loans</h3><p>Current and historical loan accounts.</p></div></div>
-        {loans.length === 0 ? <div className="deductions-empty-state">No employee loans found.</div> : <div className="deductions-table-wrap"><table className="deductions-table"><thead><tr><th>Loan</th><th>Total payable</th><th>Installment</th><th>Outstanding</th><th>Status</th></tr></thead><tbody>{loans.map((loan) => <tr key={loan.id}><td><div className="deductions-type-cell"><strong>{loan.loan_number}</strong><span>{loan.deduction_name}</span></div></td><td>{formatCurrency(loan.total_payable)}</td><td>{formatCurrency(loan.installment_amount)}</td><td className="deductions-amount">{formatCurrency(loan.outstanding_balance)}</td><td><span className={`deductions-status deductions-status--${loan.status}`}>{statusLabel(loan.status)}</span></td></tr>)}</tbody></table></div>}
-      </div>
-      <div className="deductions-table-card">
-        <div className="deductions-table-card__header"><div><h3>Recurring deductions</h3><p>Active employee deduction assignments.</p></div></div>
-        {assignments.length === 0 ? <div className="deductions-empty-state">No recurring deductions assigned.</div> : <div className="deductions-table-wrap"><table className="deductions-table"><thead><tr><th>Deduction</th><th>Value</th><th>Effective from</th><th>Notes</th></tr></thead><tbody>{assignments.map((item) => <tr key={item.id}><td>{item.deduction_name}</td><td>{item.calculation_type === 'percentage' ? `${item.percentage}%` : formatCurrency(item.amount)}</td><td>{formatDate(item.effective_from)}</td><td>{item.notes || '—'}</td></tr>)}</tbody></table></div>}
-      </div>
-      <div className="deductions-table-card">
-        <div className="deductions-table-card__header"><div><h3>Deduction history</h3><p>Latest payroll deduction records.</p></div></div>
-        {transactions.length === 0 ? <div className="deductions-empty-state">No deduction history found.</div> : <div className="deductions-table-wrap"><table className="deductions-table"><thead><tr><th>Date</th><th>Deduction</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead><tbody>{transactions.map((item) => <tr key={item.id}><td>{formatDate(item.transaction_date)}</td><td>{item.deduction_name}</td><td>{item.reference || item.loan_number || '—'}</td><td>{formatCurrency(item.amount)}</td><td><span className={`deductions-status deductions-status--${item.status}`}>{statusLabel(item.status)}</span></td></tr>)}</tbody></table></div>}
-      </div>
-    </section>
-  );
+  return <section className="deductions-page employee-deductions-page"><div className="deductions-heading"><div><span>Employee self-service</span><h1>My Loans and Deductions</h1><p>Review recurring deductions, loan balances, and approved deduction history.</p></div></div>{error && <div className="deductions-alert deductions-alert--error">{error}</div>}<div className="deductions-summary-grid"><Summary label="Active loans" value={data?.loan_summary.active_count ?? 0} /><Summary label="Outstanding balance" value={money(data?.loan_summary.outstanding ?? 0)} /><Summary label="Recurring deductions" value={data?.assignments.length ?? 0} /><Summary label="Approved deductions" value={money(data?.summary.approved ?? 0)} /></div><div className="deductions-panel"><div className="deductions-panel__heading"><div><h2>Employee loans</h2><p>Loan installment and outstanding-balance information.</p></div></div>{loading ? <div className="deductions-empty">Loading deductions…</div> : !data || data.loans.length === 0 ? <div className="deductions-empty">No employee loans are available.</div> : <div className="deductions-table-wrap"><table className="deductions-table"><thead><tr><th>Loan</th><th>Principal</th><th>Installment</th><th>Outstanding</th><th>Status</th></tr></thead><tbody>{data.loans.map((loan) => <tr key={loan.id}><td><strong>{loan.deduction_name}</strong><span>{loan.loan_number}</span></td><td>{money(loan.principal_amount)}</td><td>{money(loan.installment_amount)}</td><td>{money(loan.outstanding_balance)}</td><td><span className={`deductions-status deductions-status--${loan.status}`}>{title(loan.status)}</span></td></tr>)}</tbody></table></div>}</div><div className="deductions-panel"><div className="deductions-panel__heading"><div><h2>Recurring deductions</h2><p>Active company or employee-authorized deductions.</p></div></div>{!data || data.assignments.length === 0 ? <div className="deductions-empty">No active recurring deductions are available.</div> : <div className="deductions-table-wrap"><table className="deductions-table"><thead><tr><th>Deduction</th><th>Amount</th><th>Percentage</th><th>Effective</th></tr></thead><tbody>{data.assignments.map((item) => <tr key={item.id}><td><strong>{item.deduction_name}</strong><span>{item.deduction_code}</span></td><td>{money(item.amount)}</td><td>{Number(item.percentage || 0).toFixed(2)}%</td><td>{date(item.effective_from)}{item.effective_to ? ` – ${date(item.effective_to)}` : ''}</td></tr>)}</tbody></table></div>}</div><div className="deductions-panel"><div className="deductions-panel__heading"><div><h2>Approved deduction history</h2><p>Posted deductions and loan payments.</p></div></div>{!data || data.transactions.length === 0 ? <div className="deductions-empty">No approved deduction transactions are available.</div> : <div className="deductions-table-wrap"><table className="deductions-table"><thead><tr><th>Date</th><th>Deduction</th><th>Amount</th><th>Payroll period</th><th>Reference</th></tr></thead><tbody>{data.transactions.map((item) => <tr key={item.id}><td>{date(item.transaction_date)}</td><td><strong>{item.deduction_name}</strong><span>{item.loan_number || title(item.category)}</span></td><td>{money(item.amount)}</td><td>{item.payroll_period_name || 'Not assigned'}</td><td>{item.reference || '—'}</td></tr>)}</tbody></table></div>}</div></section>;
 }
+
+function Summary({ label, value }: { label: string; value: string | number }) { return <article className="deductions-summary-card"><span>{label}</span><strong>{value}</strong></article>; }
+function money(value: number) { return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(value || 0)); }
+function date(value: string) { if (!value) return '—'; return new Intl.DateTimeFormat('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`)); }
+function title(value: string) { return value.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '); }

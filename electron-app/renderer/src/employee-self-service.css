@@ -1,0 +1,380 @@
+.self-page {
+  display: grid;
+  gap: 22px;
+}
+
+.self-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.self-heading > div > span,
+.self-panel__heading span {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.self-heading h1,
+.self-panel__heading h2 {
+  margin: 5px 0 6px;
+}
+
+.self-heading p,
+.self-panel__heading p {
+  margin: 0;
+  color: #64748b;
+}
+
+.self-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 15px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.self-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.self-button--secondary {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.self-alert {
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.self-alert--error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.self-alert--success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.self-dashboard-grid,
+.self-summary-grid,
+.self-module-grid,
+.self-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.self-dashboard-card,
+.self-summary-card,
+.self-module-card,
+.self-profile-card,
+.self-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 16px rgb(15 23 42 / 5%);
+}
+
+.self-dashboard-card,
+.self-summary-card {
+  display: grid;
+  gap: 5px;
+  padding: 18px;
+}
+
+.self-dashboard-card span,
+.self-summary-card span,
+.self-schedule-card span {
+  color: #64748b;
+  font-size: 0.84rem;
+}
+
+.self-dashboard-card strong,
+.self-summary-card strong {
+  color: #0f172a;
+  font-size: 1.45rem;
+}
+
+.self-dashboard-card small {
+  color: #94a3b8;
+}
+
+.self-module-card {
+  position: relative;
+  padding: 20px;
+}
+
+.self-module-card h2 {
+  margin: 18px 0 9px;
+  font-size: 1.05rem;
+}
+
+.self-module-card p {
+  min-height: 48px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.self-module-card a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.self-module-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.self-panel {
+  padding: 20px;
+}
+
+.self-panel__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.self-schedule-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.self-schedule-card > div {
+  display: grid;
+  gap: 5px;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.self-filter-grid,
+.self-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.self-filter-grid label,
+.self-form-grid label,
+.self-inline-filter {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.self-filter-grid input,
+.self-filter-grid select,
+.self-form-grid input,
+.self-form-grid select,
+.self-form-grid textarea,
+.self-inline-filter select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 10px 11px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+}
+
+.self-form-grid input:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.self-form-span {
+  grid-column: 1 / -1;
+}
+
+.self-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.self-table-wrap {
+  overflow-x: auto;
+}
+
+.self-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.self-table th,
+.self-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.self-table th {
+  color: #64748b;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.self-table td span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.self-status {
+  display: inline-flex !important;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #e2e8f0;
+  color: #334155 !important;
+  font-size: 0.72rem !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.self-status--present,
+.self-status--approved,
+.self-status--remitted {
+  background: #dcfce7;
+  color: #166534 !important;
+}
+
+.self-status--pending,
+.self-status--incomplete {
+  background: #fef3c7;
+  color: #92400e !important;
+}
+
+.self-status--rejected,
+.self-status--absent,
+.self-status--cancelled {
+  background: #fee2e2;
+  color: #991b1b !important;
+}
+
+.self-empty {
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 28px;
+  color: #64748b;
+  text-align: center;
+}
+
+.self-profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-radius: 15px;
+  padding: 22px;
+  background: linear-gradient(135deg, #eff6ff, #f8fafc);
+}
+
+.self-profile-avatar {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.self-profile-hero h2,
+.self-profile-hero p {
+  margin: 0 0 5px;
+}
+
+.self-profile-hero p {
+  color: #64748b;
+}
+
+.self-profile-card {
+  padding: 18px;
+}
+
+.self-profile-card h3 {
+  margin: 0 0 14px;
+}
+
+.self-profile-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.self-profile-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.self-profile-card dt {
+  color: #64748b;
+}
+
+.self-profile-card dd {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+@media (max-width: 800px) {
+  .self-heading,
+  .self-panel__heading {
+    flex-direction: column;
+  }
+
+  .self-button {
+    width: 100%;
+  }
+
+  .self-profile-card dl div {
+    display: grid;
+  }
+
+  .self-profile-card dd {
+    text-align: left;
+  }
+}

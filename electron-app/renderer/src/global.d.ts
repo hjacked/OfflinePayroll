@@ -106,6 +106,14 @@ import type {
   PayslipSummary,
 } from './models/Payslip';
 import type {
+  SelfServiceContributions,
+  SelfServiceDashboard,
+  SelfServiceDeductions,
+  SelfServiceEarnings,
+  SelfServiceProfile,
+  SelfServiceSchedule,
+} from './models/SelfService';
+import type {
   BankTransferReport,
   ContributionReport,
   LineItemReport,
@@ -140,6 +148,29 @@ export interface PayrollApi {
     resetPassword: (id: string, payload: { new_password: string }) => Promise<AuthUser>;
     roles: () => Promise<RoleOption[]>;
     audit: (limit?: number) => Promise<{ data: AuthAuditLog[]; total: number }>;
+  };
+  selfService: {
+    dashboard: () => Promise<SelfServiceDashboard>;
+    profile: () => Promise<SelfServiceProfile>;
+    updateContact: (payload: { phone: string; address: string }) => Promise<SelfServiceProfile>;
+    attendanceList: (filters?: AttendanceListFilters) => Promise<{ data: AttendanceRecord[]; total: number }>;
+    attendanceSummary: (filters?: AttendanceListFilters) => Promise<AttendanceSummary>;
+    schedule: () => Promise<SelfServiceSchedule | null>;
+    correctionList: (filters?: { status?: 'all' | 'pending' | 'approved' | 'rejected' }) => Promise<{ data: AttendanceCorrection[]; total: number }>;
+    createCorrection: (payload: Omit<AttendanceCorrectionInput, 'employee_id'>) => Promise<AttendanceCorrection>;
+    leaveTypes: () => Promise<{ data: LeaveType[]; total: number }>;
+    leaveBalances: (filters?: Omit<LeaveBalanceFilters, 'employee_id'>) => Promise<{ data: LeaveBalance[]; total: number }>;
+    leaveRequests: (filters?: Omit<LeaveRequestFilters, 'employee_id'>) => Promise<{ data: LeaveRequest[]; total: number }>;
+    leaveRequest: (id: string) => Promise<LeaveRequest>;
+    createLeaveRequest: (payload: Omit<LeaveRequestInput, 'employee_id'>) => Promise<LeaveRequest>;
+    cancelLeaveRequest: (id: string, payload?: { reason: string }) => Promise<LeaveRequest>;
+    earnings: (filters?: EarningTransactionFilters) => Promise<SelfServiceEarnings>;
+    deductions: (filters?: DeductionTransactionFilters) => Promise<SelfServiceDeductions>;
+    contributions: (filters?: ContributionRecordFilters) => Promise<SelfServiceContributions>;
+    payrollHistory: (filters?: { date_from?: string; date_to?: string }) => Promise<{ data: EmployeePayrollHistoryRecord[]; total: number }>;
+    payslips: (filters?: Omit<PayslipFilters, 'employee_id' | 'published_only'>) => Promise<{ data: Payslip[]; total: number }>;
+    payslip: (id: string) => Promise<Payslip>;
+    exportPayslipPdf: (id: string, suggestedName: string) => Promise<PayslipPdfExportResult>;
   };
   employee: {
     list: (

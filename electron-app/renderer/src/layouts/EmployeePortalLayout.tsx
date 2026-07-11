@@ -19,12 +19,14 @@ export default function EmployeePortalLayout() {
         </div>
         <nav className="employee-portal-nav" aria-label="Employee portal navigation">
           <NavLink end to="/employee">Dashboard</NavLink>
+          <NavLink to="/employee/timekeeping">My Timekeeping</NavLink>
           <NavLink to="/employee/leave">My Leave</NavLink>
           <NavLink to="/employee/earnings">My Earnings</NavLink>
           <NavLink to="/employee/deductions">My Deductions</NavLink>
           <NavLink to="/employee/contributions">My Contributions</NavLink>
           <NavLink to="/employee/payroll-history">Payroll History</NavLink>
           <NavLink to="/employee/payslips">My Payslips</NavLink>
+          <NavLink to="/employee/profile">My Profile</NavLink>
           {can('dashboard:view') && <NavLink to="/admin/dashboard">Administration</NavLink>}
           <NavLink to="/account/change-password">Password</NavLink>
           <button type="button" onClick={() => void signOut()}>Sign out</button>

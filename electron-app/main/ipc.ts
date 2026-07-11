@@ -158,6 +158,29 @@ import {
   getReportsDashboard,
 } from './services/reports-service';
 import {
+  cancelSelfLeaveRequest,
+  createSelfAttendanceCorrection,
+  createSelfLeaveRequest,
+  getSelfAttendance,
+  getSelfAttendanceCorrections,
+  getSelfAttendanceSummary,
+  getSelfContributions,
+  getSelfDeductions,
+  getSelfEarnings,
+  getSelfIdentity,
+  getSelfLeaveBalances,
+  getSelfLeaveRequest,
+  getSelfLeaveRequests,
+  getSelfLeaveTypes,
+  getSelfPayrollHistory,
+  getSelfPayslip,
+  getSelfPayslips,
+  getSelfSchedule,
+  getSelfServiceDashboard,
+  getSelfServiceProfile,
+  updateSelfServiceContact,
+} from './services/employee-self-service';
+import {
   changePassword,
   createUser,
   currentUser,
@@ -184,6 +207,98 @@ export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'auth.logout', async () => logout());
   registerHandler(ipcMain, 'auth.changePassword', async (_event, payload: unknown) =>
     changePassword(payload),
+  );
+
+
+  registerHandler(ipcMain, 'self.dashboard', async () => getSelfServiceDashboard());
+  registerHandler(ipcMain, 'self.profile', async () => getSelfServiceProfile());
+  registerHandler(ipcMain, 'self.profile.updateContact', async (_event, payload: unknown) =>
+    updateSelfServiceContact(payload),
+  );
+  registerHandler(ipcMain, 'self.attendance.list', async (_event, filters: unknown) =>
+    getSelfAttendance(filters),
+  );
+  registerHandler(ipcMain, 'self.attendance.summary', async (_event, filters: unknown) =>
+    getSelfAttendanceSummary(filters),
+  );
+  registerHandler(ipcMain, 'self.attendance.schedule', async () => getSelfSchedule());
+  registerHandler(ipcMain, 'self.attendance.corrections', async (_event, filters: unknown) =>
+    getSelfAttendanceCorrections(filters),
+  );
+  registerHandler(ipcMain, 'self.attendance.createCorrection', async (_event, payload: unknown) =>
+    createSelfAttendanceCorrection(payload),
+  );
+  registerHandler(ipcMain, 'self.leave.types', async () => getSelfLeaveTypes());
+  registerHandler(ipcMain, 'self.leave.balances', async (_event, filters: unknown) =>
+    getSelfLeaveBalances(filters),
+  );
+  registerHandler(ipcMain, 'self.leave.requests', async (_event, filters: unknown) =>
+    getSelfLeaveRequests(filters),
+  );
+  registerHandler(ipcMain, 'self.leave.get', async (_event, id: unknown) =>
+    getSelfLeaveRequest(requireId(id, 'leave request')),
+  );
+  registerHandler(ipcMain, 'self.leave.create', async (_event, payload: unknown) =>
+    createSelfLeaveRequest(payload),
+  );
+  registerHandler(ipcMain, 'self.leave.cancel', async (_event, id: unknown, payload: unknown) =>
+    cancelSelfLeaveRequest(requireId(id, 'leave request'), payload),
+  );
+  registerHandler(ipcMain, 'self.earnings', async (_event, filters: unknown) =>
+    getSelfEarnings(filters),
+  );
+  registerHandler(ipcMain, 'self.deductions', async (_event, filters: unknown) =>
+    getSelfDeductions(filters),
+  );
+  registerHandler(ipcMain, 'self.contributions', async (_event, filters: unknown) =>
+    getSelfContributions(filters),
+  );
+  registerHandler(ipcMain, 'self.payrollHistory', async (_event, filters: unknown) =>
+    getSelfPayrollHistory(filters),
+  );
+  registerHandler(ipcMain, 'self.payslips', async (_event, filters: unknown) =>
+    getSelfPayslips(filters),
+  );
+  registerHandler(ipcMain, 'self.payslip', async (_event, id: unknown) =>
+    getSelfPayslip(requireId(id, 'payslip')),
+  );
+  registerHandler(
+    ipcMain,
+    'self.payslip.exportPdf',
+    async (event, id: unknown, suggestedName: unknown) => {
+      const payslipId = requireId(id, 'payslip');
+      const [record, identity] = await Promise.all([
+        getSelfPayslip(payslipId),
+        getSelfIdentity(),
+      ]);
+      const requestedName = typeof suggestedName === 'string' ? suggestedName.trim() : '';
+      const baseName = (requestedName || record.reference_number || 'payslip')
+        .replace(/[^a-zA-Z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const parent = BrowserWindow.fromWebContents(event.sender);
+      const options = {
+        title: 'Save payslip as PDF',
+        defaultPath: `${baseName || 'payslip'}.pdf`,
+        filters: [{ name: 'PDF document', extensions: ['pdf'] }],
+      };
+      const result = parent
+        ? await dialog.showSaveDialog(parent, options)
+        : await dialog.showSaveDialog(options);
+      if (result.canceled || !result.filePath) return { saved: false };
+      const pdf = await event.sender.printToPDF({
+        printBackground: true,
+        landscape: false,
+        pageSize: 'A4',
+        margins: { top: 0.3, bottom: 0.3, left: 0.3, right: 0.3 },
+      });
+      await writeFile(result.filePath, pdf);
+      await recordPayslipDownload(
+        payslipId,
+        identity.user.display_name || identity.employee.name,
+        result.filePath,
+      );
+      return { saved: true, filePath: result.filePath };
+    },
   );
 
   registerHandler(ipcMain, 'user.list', async (_event, filters: unknown) => listUsers(filters));
@@ -972,6 +1087,27 @@ function registerHandler(
 function getChannelPermission(channel: string): string | null {
   const exact: Record<string, string> = {
     'user.get': 'users:manage',
+    'employee.list': 'employees:view',
+    'employee.get': 'employees:view',
+    'attendance.list': 'timekeeping:view',
+    'attendance.get': 'timekeeping:view',
+    'attendance.summary': 'timekeeping:view',
+    'schedule.list': 'timekeeping:view',
+    'schedule.assignments': 'timekeeping:view',
+    'attendanceCorrection.list': 'timekeeping:view',
+    'attendanceCorrection.create': 'timekeeping:manage',
+    'leaveType.list': 'leave:view',
+    'leaveBalance.list': 'leave:view',
+    'leaveRequest.list': 'leave:view',
+    'leaveRequest.get': 'leave:view',
+    'leaveRequest.summary': 'leave:view',
+    'leaveRequest.create': 'leave:manage',
+    'leaveRequest.update': 'leave:manage',
+    'leaveRequest.cancel': 'leave:manage',
+    'companyProfile.get': 'payslips:view',
+    'payslip.employeeList': 'payslips:view',
+    'payslip.employeeGet': 'payslips:view',
+    'payslip.exportPdf': 'payslips:view',
     'employee.create': 'employees:manage',
     'employee.update': 'employees:manage',
     'employee.setStatus': 'employees:manage',
@@ -1042,8 +1178,18 @@ function getChannelPermission(channel: string): string | null {
     'payslip.delete': 'payslips:manage',
   };
   if (exact[channel]) return exact[channel];
+  if (channel.startsWith('self.')) return 'employee_portal:view';
+  if (channel.startsWith('earningType.') || channel.startsWith('earningAssignment.') || channel.startsWith('earningTransaction.')) {
+    return 'earnings:manage';
+  }
+  if (channel.startsWith('deductionType.') || channel.startsWith('deductionAssignment.') || channel.startsWith('loan.') || channel.startsWith('deductionTransaction.')) {
+    return 'deductions:manage';
+  }
+  if (channel.startsWith('contributionType.') || channel.startsWith('contributionTable.') || channel.startsWith('contributionRecord.') || channel === 'contribution.calculate') {
+    return 'contributions:manage';
+  }
   if (channel.startsWith('report.')) return 'reports:view';
-  if (channel.startsWith('payroll.') && channel !== 'payroll.employeeHistory') return 'payroll:manage';
+  if (channel.startsWith('payroll.')) return 'payroll:manage';
   if (channel === 'payslip.list' || channel === 'payslip.summary' || channel === 'payslip.get' || channel === 'payslip.options') {
     return 'payslips:view';
   }
