@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Payroll Offline API (Local IPC Contract)
+  version: 0.1.0
+  description: Documentation for the local payroll operations exposed through Electron IPC.
+paths:
+  /employees:
+    get:
+      summary: List employees
+      responses:
+        '200':
+          description: Employee list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Employee'
+                  total:
+                    type: integer
+  /employees/{id}:
+    get:
+      summary: Get an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee record or null
+          content:
+            application/json:
+              schema:
+                nullable: true
+                allOf:
+                  - $ref: '#/components/schemas/Employee'
+  /payroll-periods:
+    post:
+      summary: Create a payroll period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayrollPeriod'
+      responses:
+        '200':
+          description: Created payroll period
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [period]
+                properties:
+                  period:
+                    $ref: '#/components/schemas/PayrollPeriod'
+  /payroll-periods/{id}/run:
+    post:
+      summary: Start payroll processing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payroll processing status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [periodId, status]
+                properties:
+                  periodId:
+                    type: string
+                  status:
+                    type: string
+                    example: processing
+components:
+  schemas:
+    Employee:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        department:
+          type: string
+        role_title:
+          type: string
+    CreatePayrollPeriod:
+      type: object
+      required: [name, start_date, end_date, frequency]
+      properties:
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        frequency:
+          type: string
+          enum: [weekly, biweekly, semimonthly, monthly]
+        created_by:
+          type: string
+    PayrollPeriod:
+      allOf:
+        - $ref: '#/components/schemas/CreatePayrollPeriod'
+        - type: object
+          required: [id, status]
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+              enum: [open, processing, completed, locked, cancelled]
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
