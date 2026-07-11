@@ -13,6 +13,7 @@ export default function EmployeePortalLayout() {
           <NavLink to="/employee/leave">My Leave</NavLink>
           <NavLink to="/employee/earnings">My Earnings</NavLink>
           <NavLink to="/employee/deductions">My Deductions</NavLink>
+          <NavLink to="/employee/contributions">My Contributions</NavLink>
           <NavLink to="/admin/dashboard">Administration</NavLink>
         </nav>
       </header>

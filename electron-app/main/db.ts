@@ -28,6 +28,7 @@ export async function initDb(): Promise<Database> {
   await seedCurrentYearLeaveBalances(database);
   await seedDefaultEarningTypes(database);
   await seedDefaultDeductionTypes(database);
+  await seedDefaultContributionTypes(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -556,6 +557,121 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS government_contribution_types (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      authority TEXT NOT NULL,
+      description TEXT,
+      calculation_method TEXT NOT NULL DEFAULT 'bracket',
+      government_number_field TEXT NOT NULL DEFAULT 'none',
+      employee_share_enabled INTEGER NOT NULL DEFAULT 1,
+      employer_share_enabled INTEGER NOT NULL DEFAULT 1,
+      is_tax INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (calculation_method IN ('bracket','percentage','fixed','tax-bracket')),
+      CHECK (government_number_field IN ('sss_number','philhealth_number','pagibig_number','tin_number','none')),
+      CHECK (employee_share_enabled IN (0,1)),
+      CHECK (employer_share_enabled IN (0,1)),
+      CHECK (is_tax IN (0,1)),
+      CHECK (is_active IN (0,1))
+    );
+
+    CREATE TABLE IF NOT EXISTS government_contribution_tables (
+      id TEXT PRIMARY KEY,
+      contribution_type_id TEXT NOT NULL,
+      version_name TEXT NOT NULL,
+      effective_from TEXT NOT NULL,
+      effective_to TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (contribution_type_id)
+        REFERENCES government_contribution_types(id)
+        ON DELETE RESTRICT,
+      UNIQUE (contribution_type_id, version_name),
+      CHECK (effective_to IS NULL OR effective_to = '' OR effective_to >= effective_from),
+      CHECK (status IN ('draft','active','archived'))
+    );
+
+    CREATE TABLE IF NOT EXISTS government_contribution_brackets (
+      id TEXT PRIMARY KEY,
+      table_version_id TEXT NOT NULL,
+      min_compensation REAL NOT NULL DEFAULT 0,
+      max_compensation REAL,
+      employee_fixed REAL NOT NULL DEFAULT 0,
+      employee_rate REAL NOT NULL DEFAULT 0,
+      employee_excess_over REAL NOT NULL DEFAULT 0,
+      employer_fixed REAL NOT NULL DEFAULT 0,
+      employer_rate REAL NOT NULL DEFAULT 0,
+      employer_excess_over REAL NOT NULL DEFAULT 0,
+      notes TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (table_version_id)
+        REFERENCES government_contribution_tables(id)
+        ON DELETE CASCADE,
+      CHECK (min_compensation >= 0),
+      CHECK (max_compensation IS NULL OR max_compensation >= min_compensation),
+      CHECK (employee_fixed >= 0),
+      CHECK (employee_rate >= 0),
+      CHECK (employee_excess_over >= 0),
+      CHECK (employer_fixed >= 0),
+      CHECK (employer_rate >= 0),
+      CHECK (employer_excess_over >= 0)
+    );
+
+    CREATE TABLE IF NOT EXISTS government_contribution_records (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      contribution_type_id TEXT NOT NULL,
+      table_version_id TEXT NOT NULL,
+      payroll_period_id TEXT,
+      contribution_date TEXT NOT NULL,
+      compensation_basis REAL NOT NULL,
+      employee_share REAL NOT NULL DEFAULT 0,
+      employer_share REAL NOT NULL DEFAULT 0,
+      total_contribution REAL NOT NULL DEFAULT 0,
+      government_number TEXT,
+      bracket_json TEXT NOT NULL,
+      reference TEXT,
+      notes TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      FOREIGN KEY (contribution_type_id)
+        REFERENCES government_contribution_types(id)
+        ON DELETE RESTRICT,
+      FOREIGN KEY (table_version_id)
+        REFERENCES government_contribution_tables(id)
+        ON DELETE RESTRICT,
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE SET NULL,
+      UNIQUE (employee_id, contribution_type_id, contribution_date, payroll_period_id),
+      CHECK (compensation_basis >= 0),
+      CHECK (employee_share >= 0),
+      CHECK (employer_share >= 0),
+      CHECK (total_contribution >= 0),
+      CHECK (status IN ('draft','approved','remitted','cancelled'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_contribution_types_active
+      ON government_contribution_types(is_active, name);
+    CREATE INDEX IF NOT EXISTS idx_contribution_tables_type_dates
+      ON government_contribution_tables(contribution_type_id, status, effective_from, effective_to);
+    CREATE INDEX IF NOT EXISTS idx_contribution_brackets_table_range
+      ON government_contribution_brackets(table_version_id, min_compensation, max_compensation);
+    CREATE INDEX IF NOT EXISTS idx_contribution_records_employee_date
+      ON government_contribution_records(employee_id, contribution_date);
+    CREATE INDEX IF NOT EXISTS idx_contribution_records_type_status
+      ON government_contribution_records(contribution_type_id, status, contribution_date);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(
@@ -831,6 +947,72 @@ async function seedDefaultDeductionTypes(db: Database): Promise<void> {
         id, code, name, category, description, calculation_type,
         default_amount, default_percentage, recurrence, priority,
         is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      ...row,
+    );
+  }
+}
+
+async function seedDefaultContributionTypes(db: Database): Promise<void> {
+  const defaults: Array<[
+    string, string, string, string, string, string, string, number, number, number
+  ]> = [
+    [
+      'contribution_sss',
+      'SSS',
+      'Social Security System',
+      'Social Security System',
+      'Configurable employee and employer social-security contribution.',
+      'bracket',
+      'sss_number',
+      1,
+      1,
+      0,
+    ],
+    [
+      'contribution_philhealth',
+      'PHIC',
+      'PhilHealth',
+      'Philippine Health Insurance Corporation',
+      'Configurable employee and employer health-insurance contribution.',
+      'percentage',
+      'philhealth_number',
+      1,
+      1,
+      0,
+    ],
+    [
+      'contribution_pagibig',
+      'HDMF',
+      'Pag-IBIG Fund',
+      'Home Development Mutual Fund',
+      'Configurable employee and employer housing-fund contribution.',
+      'bracket',
+      'pagibig_number',
+      1,
+      1,
+      0,
+    ],
+    [
+      'contribution_withholding_tax',
+      'WTAX',
+      'Withholding Tax',
+      'Bureau of Internal Revenue',
+      'Configurable withholding-tax table using fixed tax plus a rate on excess compensation.',
+      'tax-bracket',
+      'tin_number',
+      1,
+      0,
+      1,
+    ],
+  ];
+
+  for (const row of defaults) {
+    await db.run(
+      `INSERT OR IGNORE INTO government_contribution_types (
+        id, code, name, authority, description, calculation_method,
+        government_number_field, employee_share_enabled,
+        employer_share_enabled, is_tax, is_active, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
       ...row,
     );

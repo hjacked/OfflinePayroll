@@ -38,8 +38,9 @@ const portalModules: PortalModule[] = [
   {
     title: 'Government Contributions',
     description:
-      'Review employee contributions, employer shares, and statutory deduction history.',
-    status: 'Available soon',
+      'Review employee deductions, employer shares, government membership numbers, and contribution history.',
+    status: 'Available',
+    path: '/employee/contributions',
   },
   {
     title: 'Payroll History',

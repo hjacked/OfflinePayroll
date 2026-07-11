@@ -55,6 +55,24 @@ import type {
   EarningTypeInput,
 } from './models/Earnings';
 import type {
+  ContributionCalculationInput,
+  ContributionCalculationResult,
+  ContributionRecord,
+  ContributionRecordFilters,
+  ContributionRecordInput,
+  ContributionRecordStatus,
+  ContributionSummary,
+  ContributionTableFilters,
+  ContributionTableStatus,
+  ContributionTableVersion,
+  ContributionTableVersionInput,
+  ContributionType,
+  ContributionTypeFilters,
+  ContributionTypeInput,
+  ContributionBracket,
+  ContributionBracketInput,
+} from './models/Contributions';
+import type {
   Employee,
   EmployeeInput,
   EmployeeListFilters,
@@ -207,6 +225,35 @@ export interface PayrollApi {
     create: (payload: DeductionTransactionInput) => Promise<DeductionTransaction>;
     update: (id: string, payload: DeductionTransactionInput) => Promise<DeductionTransaction>;
     setStatus: (id: string, status: DeductionTransactionStatus) => Promise<DeductionTransaction>;
+    delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
+  };
+
+  contributionType: {
+    list: (filters?: ContributionTypeFilters) => Promise<{ data: ContributionType[]; total: number }>;
+    get: (id: string) => Promise<ContributionType | null>;
+    create: (payload: ContributionTypeInput) => Promise<ContributionType>;
+    update: (id: string, payload: ContributionTypeInput) => Promise<ContributionType>;
+    setStatus: (id: string, active: boolean) => Promise<ContributionType>;
+    delete: (id: string) => Promise<{ id: string; deactivated: boolean }>;
+  };
+  contributionTable: {
+    list: (filters?: ContributionTableFilters) => Promise<{ data: ContributionTableVersion[]; total: number }>;
+    get: (id: string) => Promise<{ table: ContributionTableVersion; brackets: ContributionBracket[] } | null>;
+    create: (payload: ContributionTableVersionInput) => Promise<ContributionTableVersion>;
+    update: (id: string, payload: ContributionTableVersionInput) => Promise<ContributionTableVersion>;
+    setStatus: (id: string, status: ContributionTableStatus) => Promise<ContributionTableVersion>;
+    replaceBrackets: (id: string, brackets: ContributionBracketInput[]) => Promise<ContributionBracket[]>;
+    delete: (id: string) => Promise<{ id: string; archived: boolean }>;
+  };
+  contribution: {
+    calculate: (payload: ContributionCalculationInput) => Promise<ContributionCalculationResult>;
+  };
+  contributionRecord: {
+    list: (filters?: ContributionRecordFilters) => Promise<{ data: ContributionRecord[]; total: number }>;
+    get: (id: string) => Promise<ContributionRecord | null>;
+    summary: (filters?: ContributionRecordFilters) => Promise<ContributionSummary>;
+    create: (payload: ContributionRecordInput) => Promise<ContributionRecord>;
+    setStatus: (id: string, status: ContributionRecordStatus) => Promise<ContributionRecord>;
     delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
   };
   payroll: {

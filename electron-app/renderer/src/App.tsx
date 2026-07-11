@@ -3,6 +3,13 @@ import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminModulePage from './pages/admin/AdminModulePage';
+import ContributionCalculatorPage from './pages/admin/contributions/ContributionCalculatorPage';
+import ContributionHistoryPage from './pages/admin/contributions/ContributionHistoryPage';
+import ContributionReportsPage from './pages/admin/contributions/ContributionReportsPage';
+import ContributionTablesPage from './pages/admin/contributions/ContributionTablesPage';
+import ContributionTypesPage from './pages/admin/contributions/ContributionTypesPage';
+import GovernmentContributionsPage from './pages/admin/contributions/GovernmentContributionsPage';
+import EmployeeContributionsPage from './pages/employee/contributions/EmployeeContributionsPage';
 import DeductionAssignmentsPage from './pages/admin/deductions/DeductionAssignmentsPage';
 import DeductionTransactionDetailsPage from './pages/admin/deductions/DeductionTransactionDetailsPage';
 import DeductionTransactionFormPage from './pages/admin/deductions/DeductionTransactionFormPage';
@@ -43,6 +50,7 @@ import './timekeeping.css';
 import './leave-management.css';
 import './earnings.css';
 import './deductions.css';
+import './contributions.css';
 
 export default function App() {
   return (
@@ -88,10 +96,12 @@ export default function App() {
         <Route path="deductions/new" element={<DeductionTransactionFormPage />} />
         <Route path="deductions/:id" element={<DeductionTransactionDetailsPage />} />
         <Route path="deductions/:id/edit" element={<DeductionTransactionFormPage />} />
-        <Route
-          path="government-contributions"
-          element={<AdminModulePage moduleKey="government-contributions" />}
-        />
+        <Route path="government-contributions" element={<GovernmentContributionsPage />} />
+        <Route path="government-contributions/types" element={<ContributionTypesPage />} />
+        <Route path="government-contributions/tables" element={<ContributionTablesPage />} />
+        <Route path="government-contributions/calculator" element={<ContributionCalculatorPage />} />
+        <Route path="government-contributions/history" element={<ContributionHistoryPage />} />
+        <Route path="government-contributions/reports" element={<ContributionReportsPage />} />
         <Route path="payroll" element={<PayrollPortal />} />
         <Route
           path="reports"
@@ -114,6 +124,7 @@ export default function App() {
         <Route path="leave/:id" element={<EmployeeLeaveDetailsPage />} />
         <Route path="earnings" element={<EmployeeEarningsPage />} />
         <Route path="deductions" element={<EmployeeDeductionsPage />} />
+        <Route path="contributions" element={<EmployeeContributionsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

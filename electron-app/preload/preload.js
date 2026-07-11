@@ -113,6 +113,40 @@ contextBridge.exposeInMainWorld('api', {
     setStatus: (id, status) => ipcRenderer.invoke('deductionTransaction.setStatus', id, status),
     delete: (id) => ipcRenderer.invoke('deductionTransaction.delete', id),
   },
+
+  contributionType: {
+    list: (filters) => ipcRenderer.invoke('contributionType.list', filters),
+    get: (id) => ipcRenderer.invoke('contributionType.get', id),
+    create: (payload) => ipcRenderer.invoke('contributionType.create', payload),
+    update: (id, payload) => ipcRenderer.invoke('contributionType.update', id, payload),
+    setStatus: (id, active) => ipcRenderer.invoke('contributionType.setStatus', id, active),
+    delete: (id) => ipcRenderer.invoke('contributionType.delete', id),
+  },
+
+  contributionTable: {
+    list: (filters) => ipcRenderer.invoke('contributionTable.list', filters),
+    get: (id) => ipcRenderer.invoke('contributionTable.get', id),
+    create: (payload) => ipcRenderer.invoke('contributionTable.create', payload),
+    update: (id, payload) => ipcRenderer.invoke('contributionTable.update', id, payload),
+    setStatus: (id, status) => ipcRenderer.invoke('contributionTable.setStatus', id, status),
+    replaceBrackets: (id, brackets) =>
+      ipcRenderer.invoke('contributionTable.replaceBrackets', id, brackets),
+    delete: (id) => ipcRenderer.invoke('contributionTable.delete', id),
+  },
+
+  contribution: {
+    calculate: (payload) => ipcRenderer.invoke('contribution.calculate', payload),
+  },
+
+  contributionRecord: {
+    list: (filters) => ipcRenderer.invoke('contributionRecord.list', filters),
+    get: (id) => ipcRenderer.invoke('contributionRecord.get', id),
+    summary: (filters) => ipcRenderer.invoke('contributionRecord.summary', filters),
+    create: (payload) => ipcRenderer.invoke('contributionRecord.create', payload),
+    setStatus: (id, status) => ipcRenderer.invoke('contributionRecord.setStatus', id, status),
+    delete: (id) => ipcRenderer.invoke('contributionRecord.delete', id),
+  },
+
   payroll: {
     createPeriod: (payload) => ipcRenderer.invoke('payroll.createPeriod', payload),
     run: (id) => ipcRenderer.invoke('payroll.run', id),

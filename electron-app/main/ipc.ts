@@ -19,6 +19,28 @@ import {
   updateWorkSchedule,
 } from './services/attendance-service';
 import {
+  calculateContribution,
+  createContributionRecord,
+  createContributionTable,
+  createContributionType,
+  deleteContributionRecord,
+  deleteContributionTable,
+  deleteContributionType,
+  getContributionRecord,
+  getContributionRecords,
+  getContributionSummary,
+  getContributionTable,
+  getContributionType,
+  getContributionTables,
+  getContributionTypes,
+  replaceContributionBrackets,
+  setContributionRecordStatus,
+  setContributionTableStatus,
+  setContributionTypeStatus,
+  updateContributionTable,
+  updateContributionType,
+} from './services/contributions-service';
+import {
   createDeductionAssignment,
   createDeductionTransaction,
   createDeductionType,
@@ -460,6 +482,100 @@ export function setupIpc(ipcMain: IpcMain): void {
   });
   registerHandler(ipcMain, 'deductionTransaction.delete', async (_event, id: unknown) =>
     deleteDeductionTransaction(requireId(id, 'deduction transaction')),
+  );
+
+
+  registerHandler(ipcMain, 'contributionType.list', async (_event, filters: unknown) =>
+    getContributionTypes(filters),
+  );
+  registerHandler(ipcMain, 'contributionType.get', async (_event, id: unknown) =>
+    getContributionType(requireId(id, 'contribution type')),
+  );
+  registerHandler(ipcMain, 'contributionType.create', async (_event, payload: unknown) =>
+    createContributionType(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'contributionType.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateContributionType(requireId(id, 'contribution type'), payload),
+  );
+  registerHandler(
+    ipcMain,
+    'contributionType.setStatus',
+    async (_event, id: unknown, active: unknown) => {
+      if (typeof active !== 'boolean') {
+        throw new Error('Contribution type status must be true or false.');
+      }
+      return setContributionTypeStatus(requireId(id, 'contribution type'), active);
+    },
+  );
+  registerHandler(ipcMain, 'contributionType.delete', async (_event, id: unknown) =>
+    deleteContributionType(requireId(id, 'contribution type')),
+  );
+
+  registerHandler(ipcMain, 'contributionTable.list', async (_event, filters: unknown) =>
+    getContributionTables(filters),
+  );
+  registerHandler(ipcMain, 'contributionTable.get', async (_event, id: unknown) =>
+    getContributionTable(requireId(id, 'contribution table')),
+  );
+  registerHandler(ipcMain, 'contributionTable.create', async (_event, payload: unknown) =>
+    createContributionTable(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'contributionTable.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateContributionTable(requireId(id, 'contribution table'), payload),
+  );
+  registerHandler(
+    ipcMain,
+    'contributionTable.setStatus',
+    async (_event, id: unknown, status: unknown) => {
+      if (status !== 'draft' && status !== 'active' && status !== 'archived') {
+        throw new Error('Invalid contribution-table status.');
+      }
+      return setContributionTableStatus(requireId(id, 'contribution table'), status);
+    },
+  );
+  registerHandler(
+    ipcMain,
+    'contributionTable.replaceBrackets',
+    async (_event, id: unknown, payload: unknown) =>
+      replaceContributionBrackets(requireId(id, 'contribution table'), payload),
+  );
+  registerHandler(ipcMain, 'contributionTable.delete', async (_event, id: unknown) =>
+    deleteContributionTable(requireId(id, 'contribution table')),
+  );
+
+  registerHandler(ipcMain, 'contribution.calculate', async (_event, payload: unknown) =>
+    calculateContribution(payload),
+  );
+  registerHandler(ipcMain, 'contributionRecord.list', async (_event, filters: unknown) =>
+    getContributionRecords(filters),
+  );
+  registerHandler(ipcMain, 'contributionRecord.get', async (_event, id: unknown) =>
+    getContributionRecord(requireId(id, 'contribution record')),
+  );
+  registerHandler(ipcMain, 'contributionRecord.summary', async (_event, filters: unknown) =>
+    getContributionSummary(filters),
+  );
+  registerHandler(ipcMain, 'contributionRecord.create', async (_event, payload: unknown) =>
+    createContributionRecord(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'contributionRecord.setStatus',
+    async (_event, id: unknown, status: unknown) => {
+      if (status !== 'draft' && status !== 'approved' && status !== 'remitted' && status !== 'cancelled') {
+        throw new Error('Invalid contribution-record status.');
+      }
+      return setContributionRecordStatus(requireId(id, 'contribution record'), status);
+    },
+  );
+  registerHandler(ipcMain, 'contributionRecord.delete', async (_event, id: unknown) =>
+    deleteContributionRecord(requireId(id, 'contribution record')),
   );
 
   registerHandler(
