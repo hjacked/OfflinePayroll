@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { adminModules } from '../config/adminModules';
+import LicenseBanner from '../license/LicenseBanner';
 
 interface NavigationItem {
   label: string;
@@ -156,6 +157,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
+        <LicenseBanner />
         <main className="admin-content"><Outlet /></main>
       </div>
     </div>

@@ -5,3 +5,8 @@ dist/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Developer license signing secrets and generated licenses
+developer-tools/license-generator/.keys/
+developer-tools/license-generator/output/*.license
+developer-tools/license-generator/output/*.json

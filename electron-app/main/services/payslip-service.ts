@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '../db';
+import { getPayslipLicenseStamp, type LicenseEdition, type LicenseStatus } from './license-service';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -31,6 +32,11 @@ export interface PayslipLineItem {
 }
 
 export interface PayslipSnapshot {
+  license?: {
+    edition: LicenseEdition;
+    status: LicenseStatus;
+    watermark: string;
+  };
   company: CompanyProfile;
   period: {
     id: string;
@@ -843,6 +849,7 @@ async function buildSnapshot(
     );
 
   return {
+    license: await getPayslipLicenseStamp(),
     company,
     period,
     employee,

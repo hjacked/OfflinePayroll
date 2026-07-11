@@ -520,7 +520,7 @@ async function stripAuditLogs(filePath: string): Promise<void> {
           AND name IN (
             'application_audit_logs', 'auth_audit_logs', 'settings_audit_logs',
             'payroll_action_logs', 'payslip_action_logs', 'payslip_download_logs',
-            'backup_audit_logs', 'backup_restore_logs'
+            'backup_audit_logs', 'backup_restore_logs', 'license_events'
           )`,
     );
     await backupDb.exec('BEGIN;');

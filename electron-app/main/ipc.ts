@@ -221,6 +221,15 @@ import {
   listAuditLogs,
   recordIpcAudit,
 } from './services/audit-service';
+import {
+  activateSignedLicense,
+  assertLicenseForChannel,
+  copyInstallationId,
+  exportLicenseDiagnostics,
+  getLicenseEvents,
+  getLicenseOverview,
+  removeSignedLicense,
+} from './services/license-service';
 
 export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'auth.initialize', async () => {
@@ -233,6 +242,45 @@ export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'auth.changePassword', async (_event, payload: unknown) =>
     changePassword(payload),
   );
+
+  registerHandler(ipcMain, 'license.current', async () => getLicenseOverview());
+  registerHandler(ipcMain, 'license.activateText', async (_event, content: unknown) =>
+    activateSignedLicense(content),
+  );
+  registerHandler(ipcMain, 'license.activateFile', async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options: OpenDialogOptions = {
+      title: 'Activate payroll license',
+      properties: ['openFile'],
+      filters: [{ name: 'Payroll license', extensions: ['license', 'json'] }],
+    };
+    const selection = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options);
+    if (selection.canceled || selection.filePaths.length === 0) return { activated: false };
+    const content = await readFile(selection.filePaths[0], 'utf8');
+    const license = await activateSignedLicense(content);
+    return { activated: true, filePath: selection.filePaths[0], license };
+  });
+  registerHandler(ipcMain, 'license.remove', async () => removeSignedLicense());
+  registerHandler(ipcMain, 'license.events', async (_event, limit: unknown) =>
+    getLicenseEvents(limit),
+  );
+  registerHandler(ipcMain, 'license.copyInstallationId', async () => copyInstallationId());
+  registerHandler(ipcMain, 'license.exportDiagnostics', async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      title: 'Export license diagnostics',
+      defaultPath: `offline-payroll-license-diagnostics-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: 'JSON file', extensions: ['json'] }],
+    };
+    const result = parent
+      ? await dialog.showSaveDialog(parent, options)
+      : await dialog.showSaveDialog(options);
+    if (result.canceled || !result.filePath) return { saved: false };
+    await writeFile(result.filePath, await exportLicenseDiagnostics(), 'utf8');
+    return { saved: true, filePath: result.filePath };
+  });
 
   registerHandler(ipcMain, 'audit.list', async (_event, filters: unknown) =>
     listAuditLogs(filters),
@@ -1224,6 +1272,7 @@ function registerHandler(
     try {
       const permission = getChannelPermission(channel);
       if (permission) await authorizePermission(permission);
+      await assertLicenseForChannel(channel);
       const result = await listener(...args);
       if (isAuditableChannel(channel)) {
         await recordIpcAudit({ channel, args: userArgs, result, outcome: 'success', origin })
@@ -1245,6 +1294,12 @@ function getChannelPermission(channel: string): string | null {
     'audit.list': 'audit:view',
     'audit.get': 'audit:view',
     'audit.exportCsv': 'audit:view',
+    'license.activateText': 'settings:manage',
+    'license.activateFile': 'settings:manage',
+    'license.remove': 'settings:manage',
+    'license.events': 'settings:manage',
+    'license.copyInstallationId': 'settings:manage',
+    'license.exportDiagnostics': 'settings:manage',
     'user.get': 'users:manage',
     'employee.list': 'employees:view',
     'employee.get': 'employees:view',

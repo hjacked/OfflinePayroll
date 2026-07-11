@@ -1,0 +1,4 @@
+.keys/
+output/*.license
+output/*.json
+!output/.gitkeep

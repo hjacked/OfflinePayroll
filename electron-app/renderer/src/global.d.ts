@@ -121,6 +121,12 @@ import type {
   SettingsBundle,
 } from './models/Settings';
 import type {
+  LicenseActivationResult,
+  LicenseDiagnosticsResult,
+  LicenseEvent,
+  LicenseOverview,
+} from './models/License';
+import type {
   BackupCreationResult,
   BackupFileSelection,
   BackupOverview,
@@ -158,6 +164,15 @@ export interface PayrollApi {
       current_password: string;
       new_password: string;
     }) => Promise<AuthUser>;
+  };
+  license: {
+    current: () => Promise<LicenseOverview>;
+    activateFile: () => Promise<LicenseActivationResult>;
+    activateText: (content: string) => Promise<LicenseOverview>;
+    remove: () => Promise<LicenseOverview>;
+    events: (limit?: number) => Promise<LicenseEvent[]>;
+    copyInstallationId: () => Promise<{ copied: true; installation_id: string }>;
+    exportDiagnostics: () => Promise<LicenseDiagnosticsResult>;
   };
   user: {
     list: (filters?: UserListFilters) => Promise<{ data: AuthUser[]; total: number }>;

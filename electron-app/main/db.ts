@@ -1003,6 +1003,43 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS license_state (
+      id TEXT PRIMARY KEY,
+      installation_id TEXT NOT NULL UNIQUE,
+      source TEXT NOT NULL DEFAULT 'automatic_trial',
+      edition TEXT NOT NULL DEFAULT 'trial',
+      license_payload_json TEXT,
+      license_signature TEXT,
+      trial_started_at TEXT NOT NULL,
+      trial_expires_at TEXT NOT NULL,
+      activated_at TEXT,
+      last_verified_at TEXT,
+      last_run_at TEXT,
+      clock_rollback_detected INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (source IN ('automatic_trial', 'signed_license')),
+      CHECK (edition IN ('trial', 'full_perpetual', 'full_subscription')),
+      CHECK (clock_rollback_detected IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS license_events (
+      id TEXT PRIMARY KEY,
+      action TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      details TEXT,
+      actor_id TEXT,
+      actor_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+      CHECK (outcome IN ('success', 'failure', 'info'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_license_events_created
+      ON license_events(created_at DESC, action, outcome);
+  `);
+
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS application_audit_logs (
       id TEXT PRIMARY KEY,
       user_id TEXT,

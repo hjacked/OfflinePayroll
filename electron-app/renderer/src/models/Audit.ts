@@ -6,7 +6,8 @@ export type AuditSource =
   | 'backup'
   | 'payroll'
   | 'payslip'
-  | 'download';
+  | 'download'
+  | 'license';
 
 export interface AuditLogEntry {
   id: string;

@@ -8,6 +8,15 @@ contextBridge.exposeInMainWorld('api', {
     logout: () => ipcRenderer.invoke('auth.logout'),
     changePassword: (payload) => ipcRenderer.invoke('auth.changePassword', payload),
   },
+  license: {
+    current: () => ipcRenderer.invoke('license.current'),
+    activateFile: () => ipcRenderer.invoke('license.activateFile'),
+    activateText: (content) => ipcRenderer.invoke('license.activateText', content),
+    remove: () => ipcRenderer.invoke('license.remove'),
+    events: (limit) => ipcRenderer.invoke('license.events', limit),
+    copyInstallationId: () => ipcRenderer.invoke('license.copyInstallationId'),
+    exportDiagnostics: () => ipcRenderer.invoke('license.exportDiagnostics'),
+  },
   user: {
     list: (filters) => ipcRenderer.invoke('user.list', filters),
     get: (id) => ipcRenderer.invoke('user.get', id),

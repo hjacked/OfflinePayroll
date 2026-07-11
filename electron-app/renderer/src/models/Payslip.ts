@@ -31,6 +31,11 @@ export interface PayslipLineItem {
 }
 
 export interface PayslipSnapshot {
+  license?: {
+    edition: 'trial' | 'full_perpetual' | 'full_subscription';
+    status: 'active' | 'expired' | 'invalid' | 'device_mismatch' | 'revoked';
+    watermark: string;
+  };
   company: CompanyProfile;
   period: {
     id: string;

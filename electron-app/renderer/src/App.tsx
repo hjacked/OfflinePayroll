@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
+import { LicenseProvider } from './license/LicenseContext';
 import { AdminAccessBoundary, HomeRedirect, RequireAuth, RequirePermission, RequireRole } from './auth/RouteGuards';
 import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
@@ -89,10 +90,12 @@ import './employee-self-service.css';
 import './settings.css';
 import './backup.css';
 import './audit.css';
+import './license.css';
 
 export default function App() {
   return (
     <AuthProvider>
+      <LicenseProvider>
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<LoginPage />} />
@@ -239,6 +242,7 @@ export default function App() {
 
         <Route path="*" element={<HomeRedirect />} />
       </Routes>
+      </LicenseProvider>
     </AuthProvider>
   );
 }

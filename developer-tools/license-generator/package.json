@@ -1,0 +1,11 @@
+{
+  "name": "offline-payroll-license-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "keys:generate": "node src/generate-keypair.mjs",
+    "license:create": "node src/generate-license.mjs",
+    "license:verify": "node src/verify-license.mjs"
+  }
+}

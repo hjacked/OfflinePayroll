@@ -407,3 +407,8 @@
   .payslip-document__summary { break-inside: avoid; }
   .payslip-document__status--draft { border: 1px solid #92400e; }
 }
+
+.payslip-document { position: relative; }
+.payslip-document__license-watermark { position: absolute; inset: 42% 0 auto; z-index: 0; transform: rotate(-28deg); text-align: center; font-size: 72px; font-weight: 950; letter-spacing: .12em; color: rgba(177, 47, 65, .10); pointer-events: none; user-select: none; }
+.payslip-document > *:not(.payslip-document__license-watermark) { position: relative; z-index: 1; }
+@media print { .payslip-document__license-watermark { color: rgba(177, 47, 65, .12) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

@@ -2,6 +2,7 @@ import { app } from 'electron';
 import { stat } from 'node:fs/promises';
 import { getDatabasePath, getDb } from '../db';
 import { authorizePermission } from './auth-service';
+import { getDeveloperInformation, type DeveloperInformation } from '../developer-info';
 import {
   getCompanyProfile,
   updateCompanyProfile,
@@ -59,6 +60,7 @@ export interface SettingsBundle {
   backup: BackupPolicy;
   system: SystemInformation;
   audit: SettingsAuditLog[];
+  developer: DeveloperInformation;
 }
 
 interface PayrollSettingsRow {
@@ -91,7 +93,7 @@ export async function getSettingsBundle(): Promise<SettingsBundle> {
     getSystemInformation(),
     listSettingsAuditLogs(30),
   ]);
-  return { company, payroll, backup, system, audit };
+  return { company, payroll, backup, system, audit, developer: getDeveloperInformation() };
 }
 
 export async function getPayrollDefaults(): Promise<PayrollDefaults> {

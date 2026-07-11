@@ -61,6 +61,9 @@ export default function PayslipDocument({ payslip }: PayslipDocumentProps) {
 
   return (
     <article className="payslip-document payslip-print-root">
+      {snapshot.license?.watermark && (
+        <div className="payslip-document__license-watermark">{snapshot.license.watermark}</div>
+      )}
       <header className="payslip-document__header">
         <div className="payslip-document__brand">
           {company.logo_data_url ? (

@@ -10,7 +10,8 @@ export type AuditSource =
   | 'backup'
   | 'payroll'
   | 'payslip'
-  | 'download';
+  | 'download'
+  | 'license';
 
 export interface AuditLogEntry {
   id: string;
@@ -156,6 +157,28 @@ const AUDIT_UNION = `
     backup_audit_logs.created_at
   FROM backup_audit_logs
   LEFT JOIN users ON users.id = backup_audit_logs.actor_id
+
+  UNION ALL
+
+  SELECT
+    'license:' || license_events.id,
+    'license',
+    'license',
+    license_events.action,
+    license_events.outcome,
+    license_events.actor_id,
+    users.username,
+    COALESCE(license_events.actor_name, users.display_name),
+    users.role,
+    'license',
+    NULL,
+    NULL,
+    COALESCE(NULLIF(license_events.details, ''), license_events.action),
+    '{}',
+    NULL,
+    license_events.created_at
+  FROM license_events
+  LEFT JOIN users ON users.id = license_events.actor_id
 
   UNION ALL
 

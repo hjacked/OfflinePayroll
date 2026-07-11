@@ -3,6 +3,7 @@ import path from 'node:path';
 import { initDb } from './db';
 import { setupIpc } from './ipc';
 import { initializeAuth } from './services/auth-service';
+import { initializeLicense } from './services/license-service';
 
 async function createWindow(): Promise<void> {
   const win = new BrowserWindow({
@@ -60,6 +61,7 @@ app
   .whenReady()
   .then(async () => {
     await initDb();
+    await initializeLicense();
 
     // Initialize the default administrator account,
     // authentication session storage, and security settings.

@@ -1,5 +1,6 @@
 import type { CompanyProfile } from './Payslip';
 import type { PayrollFrequency } from './PayrollPeriod';
+import type { DeveloperInformation } from './License';
 
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 
@@ -51,6 +52,7 @@ export interface SettingsBundle {
   backup: BackupPolicy;
   system: SystemInformation;
   audit: SettingsAuditLog[];
+  developer: DeveloperInformation;
 }
 
 export interface BackupDirectorySelection {

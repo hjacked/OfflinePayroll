@@ -8,8 +8,9 @@ import type {
   SettingsBundle,
   SystemInformation,
 } from '../../../models/Settings';
+import { DeveloperInformationPanel, LicenseSettingsPanel } from './DeveloperLicensePanels';
 
-type SettingsTab = 'company' | 'payroll' | 'backup' | 'system';
+type SettingsTab = 'company' | 'payroll' | 'backup' | 'developer' | 'license' | 'system';
 
 export default function SettingsPage() {
   const [bundle, setBundle] = useState<SettingsBundle | null>(null);
@@ -127,7 +128,7 @@ export default function SettingsPage() {
         <div>
           <span>System configuration</span>
           <h2>Settings and Company Configuration</h2>
-          <p>Manage company branding, payroll defaults, backup policy, and local system information.</p>
+          <p>Manage company branding, payroll defaults, backup policy, developer details, licensing, and local system information.</p>
         </div>
       </div>
 
@@ -138,6 +139,8 @@ export default function SettingsPage() {
         <TabButton active={tab === 'company'} onClick={() => setTab('company')}>Company</TabButton>
         <TabButton active={tab === 'payroll'} onClick={() => setTab('payroll')}>Payroll Defaults</TabButton>
         <TabButton active={tab === 'backup'} onClick={() => setTab('backup')}>Backup Policy</TabButton>
+        <TabButton active={tab === 'developer'} onClick={() => setTab('developer')}>Developer</TabButton>
+        <TabButton active={tab === 'license'} onClick={() => setTab('license')}>License</TabButton>
         <TabButton active={tab === 'system'} onClick={() => setTab('system')}>System</TabButton>
       </nav>
 
@@ -170,6 +173,12 @@ export default function SettingsPage() {
               onChooseDirectory={() => void chooseBackupDirectory()}
               onSubmit={saveBackup}
             />
+          )}
+          {tab === 'developer' && (
+            <DeveloperInformationPanel developer={bundle.developer} />
+          )}
+          {tab === 'license' && (
+            <LicenseSettingsPanel />
           )}
           {tab === 'system' && (
             <SystemSettings system={bundle.system} audit={bundle.audit} />

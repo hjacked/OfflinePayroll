@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import LicenseBanner from '../license/LicenseBanner';
 
 export default function EmployeePortalLayout() {
   const { user, logout, can } = useAuth();
@@ -32,6 +33,7 @@ export default function EmployeePortalLayout() {
           <button type="button" onClick={() => void signOut()}>Sign out</button>
         </nav>
       </header>
+      <LicenseBanner />
       <main className="employee-portal-content"><Outlet /></main>
     </div>
   );
