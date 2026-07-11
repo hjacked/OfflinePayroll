@@ -23,29 +23,46 @@ export default function PayrollPeriodFormPage() {
   const [form, setForm] = useState<PayrollPeriodInput>(initialForm);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
+  const [defaultPaymentDelayDays, setDefaultPaymentDelayDays] = useState(0);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!id) return;
     void (async () => {
       try {
-        const period = await window.api.payroll.get(id);
-        if (!period) throw new Error('Payroll period was not found.');
-        setForm({
-          name: period.name,
-          start_date: period.start_date,
-          end_date: period.end_date,
-          payment_date: period.payment_date,
-          frequency: period.frequency,
-          notes: period.notes,
-          workdays_per_month: period.workdays_per_month,
-          hours_per_day: period.hours_per_day,
-          overtime_multiplier: period.overtime_multiplier,
-          night_differential_rate: period.night_differential_rate,
-          created_by: period.created_by,
-        });
+        if (id) {
+          const period = await window.api.payroll.get(id);
+          if (!period) throw new Error('Payroll period was not found.');
+          setForm({
+            name: period.name,
+            start_date: period.start_date,
+            end_date: period.end_date,
+            payment_date: period.payment_date,
+            frequency: period.frequency,
+            notes: period.notes,
+            workdays_per_month: period.workdays_per_month,
+            hours_per_day: period.hours_per_day,
+            overtime_multiplier: period.overtime_multiplier,
+            night_differential_rate: period.night_differential_rate,
+            created_by: period.created_by,
+          });
+          return;
+        }
+
+        const defaults = await window.api.settings.payrollDefaults();
+        setDefaultPaymentDelayDays(defaults.payment_delay_days);
+        setForm((current) => ({
+          ...current,
+          frequency: defaults.default_frequency,
+          workdays_per_month: defaults.workdays_per_month,
+          hours_per_day: defaults.hours_per_day,
+          overtime_multiplier: defaults.overtime_multiplier,
+          night_differential_rate: defaults.night_differential_rate,
+        }));
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Unable to load payroll period.');
+        if (id) {
+          setError(caught instanceof Error ? caught.message : 'Unable to load payroll period.');
+        }
+        // New payroll periods retain safe built-in defaults when settings cannot be loaded.
       } finally {
         setLoading(false);
       }
@@ -59,7 +76,9 @@ export default function PayrollPeriodFormPage() {
   function handleDateChange(key: 'start_date' | 'end_date', value: string) {
     const next = { ...form, [key]: value };
     if (!id && next.start_date && next.end_date) next.name = periodName(next.start_date, next.end_date);
-    if (key === 'end_date' && (!form.payment_date || form.payment_date < value)) next.payment_date = value;
+    if (key === 'end_date' && (!form.payment_date || form.payment_date < value)) {
+      next.payment_date = addDays(value, defaultPaymentDelayDays);
+    }
     setForm(next);
   }
 
@@ -108,4 +127,13 @@ export default function PayrollPeriodFormPage() {
       </form>
     </section>
   );
+}
+
+
+function addDays(value: string, days: number): string {
+  if (!value) return value;
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  date.setDate(date.getDate() + Math.max(0, Math.trunc(days)));
+  return date.toISOString().slice(0, 10);
 }

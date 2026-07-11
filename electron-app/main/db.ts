@@ -5,7 +5,7 @@ import { open, type Database } from 'sqlite';
 
 let database: Database | null = null;
 
-function getDatabasePath(): string {
+export function getDatabasePath(): string {
   return path.join(app.getPath('userData'), 'payroll_offline.sqlite');
 }
 
@@ -30,6 +30,7 @@ export async function initDb(): Promise<Database> {
   await seedDefaultDeductionTypes(database);
   await seedDefaultContributionTypes(database);
   await seedDefaultCompanyProfile(database);
+  await seedDefaultSettings(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -895,6 +896,55 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS payroll_settings (
+      id TEXT PRIMARY KEY,
+      default_frequency TEXT NOT NULL DEFAULT 'semimonthly',
+      workdays_per_month REAL NOT NULL DEFAULT 22,
+      hours_per_day REAL NOT NULL DEFAULT 8,
+      overtime_multiplier REAL NOT NULL DEFAULT 1.25,
+      night_differential_rate REAL NOT NULL DEFAULT 0.10,
+      payment_delay_days INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (default_frequency IN ('weekly', 'biweekly', 'semimonthly', 'monthly')),
+      CHECK (workdays_per_month >= 1 AND workdays_per_month <= 31),
+      CHECK (hours_per_day >= 0.5 AND hours_per_day <= 24),
+      CHECK (overtime_multiplier >= 1 AND overtime_multiplier <= 10),
+      CHECK (night_differential_rate >= 0 AND night_differential_rate <= 1),
+      CHECK (payment_delay_days >= 0 AND payment_delay_days <= 31)
+    );
+
+    CREATE TABLE IF NOT EXISTS backup_settings (
+      id TEXT PRIMARY KEY,
+      backup_directory TEXT,
+      auto_backup_enabled INTEGER NOT NULL DEFAULT 0,
+      backup_frequency TEXT NOT NULL DEFAULT 'weekly',
+      retention_count INTEGER NOT NULL DEFAULT 10,
+      include_audit_logs INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (auto_backup_enabled IN (0, 1)),
+      CHECK (backup_frequency IN ('daily', 'weekly', 'monthly')),
+      CHECK (retention_count >= 1 AND retention_count <= 100),
+      CHECK (include_audit_logs IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS settings_audit_logs (
+      id TEXT PRIMARY KEY,
+      category TEXT NOT NULL,
+      actor_id TEXT,
+      actor_name TEXT,
+      changes_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+      CHECK (category IN ('company', 'payroll', 'backup'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_settings_audit_created
+      ON settings_audit_logs(created_at DESC, category);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(
@@ -1178,6 +1228,29 @@ async function seedDefaultCompanyProfile(db: Database): Promise<void> {
     ) VALUES (
       'default', 'PayPayroll Offline', '', '', '', '', '',
       'This is a system-generated payslip. Please contact HR or Payroll for questions.',
+      datetime('now'), datetime('now')
+    )`,
+  );
+}
+
+async function seedDefaultSettings(db: Database): Promise<void> {
+  await db.run(
+    `INSERT OR IGNORE INTO payroll_settings (
+      id, default_frequency, workdays_per_month, hours_per_day,
+      overtime_multiplier, night_differential_rate, payment_delay_days,
+      created_at, updated_at
+    ) VALUES (
+      'default', 'semimonthly', 22, 8, 1.25, 0.10, 0,
+      datetime('now'), datetime('now')
+    )`,
+  );
+
+  await db.run(
+    `INSERT OR IGNORE INTO backup_settings (
+      id, backup_directory, auto_backup_enabled, backup_frequency,
+      retention_count, include_audit_logs, created_at, updated_at
+    ) VALUES (
+      'default', '', 0, 'weekly', 10, 1,
       datetime('now'), datetime('now')
     )`,
   );

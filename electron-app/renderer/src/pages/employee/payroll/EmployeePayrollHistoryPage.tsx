@@ -16,4 +16,4 @@ export default function EmployeePayrollHistoryPage() {
 }
 function money(value: number) { return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(value || 0)); }
 function date(value: string) { if (!value) return '—'; return new Intl.DateTimeFormat('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`)); }
-function title(value: string) { return value.charAt(0).toUpperCase() + value.slice(1).replaceAll('-', ' '); }
+function title(value: string) { return value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' '); }

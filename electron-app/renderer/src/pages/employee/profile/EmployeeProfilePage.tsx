@@ -69,7 +69,7 @@ export default function EmployeeProfilePage() {
           ['Username', profile.user.username],
           ['Display name', profile.user.display_name],
           ['Account email', profile.user.email || '—'],
-          ['Role', profile.user.role.replaceAll('_', ' ')],
+          ['Role', profile.user.role.replace(/_/g, ' ')],
         ]} />
       </div>
 

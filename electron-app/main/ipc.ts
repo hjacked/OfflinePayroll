@@ -158,6 +158,14 @@ import {
   getReportsDashboard,
 } from './services/reports-service';
 import {
+  getPayrollDefaults,
+  getSettingsBundle,
+  listSettingsAuditLogs,
+  updateBackupPolicy,
+  updateCompanySettings,
+  updatePayrollSettings,
+} from './services/settings-service';
+import {
   cancelSelfLeaveRequest,
   createSelfAttendanceCorrection,
   createSelfLeaveRequest,
@@ -776,6 +784,33 @@ export function setupIpc(ipcMain: IpcMain): void {
     deleteContributionRecord(requireId(id, 'contribution record')),
   );
 
+  registerHandler(ipcMain, 'settings.get', async () => getSettingsBundle());
+  registerHandler(ipcMain, 'settings.payrollDefaults', async () => getPayrollDefaults());
+  registerHandler(ipcMain, 'settings.updateCompany', async (_event, payload: unknown) =>
+    updateCompanySettings(payload),
+  );
+  registerHandler(ipcMain, 'settings.updatePayroll', async (_event, payload: unknown) =>
+    updatePayrollSettings(payload),
+  );
+  registerHandler(ipcMain, 'settings.updateBackup', async (_event, payload: unknown) =>
+    updateBackupPolicy(payload),
+  );
+  registerHandler(ipcMain, 'settings.audit', async (_event, limit: unknown) =>
+    listSettingsAuditLogs(limit),
+  );
+  registerHandler(ipcMain, 'settings.chooseBackupDirectory', async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options: OpenDialogOptions = {
+      title: 'Choose backup directory',
+      properties: ['openDirectory', 'createDirectory'],
+    };
+    const result = parent
+      ? await dialog.showOpenDialog(parent, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) return { selected: false };
+    return { selected: true, path: result.filePaths[0] };
+  });
+
   registerHandler(ipcMain, 'payroll.list', async (_event, filters: unknown) =>
     getPayrollPeriods(filters),
   );
@@ -1104,6 +1139,13 @@ function getChannelPermission(channel: string): string | null {
     'leaveRequest.create': 'leave:manage',
     'leaveRequest.update': 'leave:manage',
     'leaveRequest.cancel': 'leave:manage',
+    'settings.get': 'settings:manage',
+    'settings.payrollDefaults': 'payroll:manage',
+    'settings.updateCompany': 'settings:manage',
+    'settings.updatePayroll': 'settings:manage',
+    'settings.updateBackup': 'settings:manage',
+    'settings.audit': 'settings:manage',
+    'settings.chooseBackupDirectory': 'settings:manage',
     'companyProfile.get': 'payslips:view',
     'payslip.employeeList': 'payslips:view',
     'payslip.employeeGet': 'payslips:view',

@@ -4,7 +4,6 @@ import { AdminAccessBoundary, HomeRedirect, RequireAuth, RequirePermission, Requ
 import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminModulePage from './pages/admin/AdminModulePage';
 import ContributionCalculatorPage from './pages/admin/contributions/ContributionCalculatorPage';
 import ContributionHistoryPage from './pages/admin/contributions/ContributionHistoryPage';
 import ContributionReportsPage from './pages/admin/contributions/ContributionReportsPage';
@@ -72,6 +71,7 @@ import EmployeeProfilePage from './pages/employee/profile/EmployeeProfilePage';
 import LoginPage from './pages/auth/LoginPage';
 import ChangePasswordPage from './pages/account/ChangePasswordPage';
 import UserAccountsPage from './pages/admin/users/UserAccountsPage';
+import SettingsPage from './pages/admin/settings/SettingsPage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -84,6 +84,7 @@ import './reports.css';
 import './payslips.css';
 import './auth.css';
 import './employee-self-service.css';
+import './settings.css';
 
 export default function App() {
   return (
@@ -185,7 +186,11 @@ export default function App() {
         />
         <Route
           path="settings"
-          element={<AdminModulePage moduleKey="settings" />}
+          element={
+            <RequirePermission permission="settings:manage">
+              <SettingsPage />
+            </RequirePermission>
+          }
         />
       </Route>
 

@@ -114,6 +114,13 @@ import type {
   SelfServiceSchedule,
 } from './models/SelfService';
 import type {
+  BackupDirectorySelection,
+  BackupPolicy,
+  PayrollDefaults,
+  SettingsAuditLog,
+  SettingsBundle,
+} from './models/Settings';
+import type {
   BankTransferReport,
   ContributionReport,
   LineItemReport,
@@ -348,6 +355,15 @@ export interface PayrollApi {
     create: (payload: ContributionRecordInput) => Promise<ContributionRecord>;
     setStatus: (id: string, status: ContributionRecordStatus) => Promise<ContributionRecord>;
     delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
+  };
+  settings: {
+    get: () => Promise<SettingsBundle>;
+    payrollDefaults: () => Promise<PayrollDefaults>;
+    updateCompany: (payload: Partial<CompanyProfile> & { company_name: string }) => Promise<CompanyProfile>;
+    updatePayroll: (payload: PayrollDefaults) => Promise<PayrollDefaults>;
+    updateBackup: (payload: BackupPolicy) => Promise<BackupPolicy>;
+    audit: (limit?: number) => Promise<SettingsAuditLog[]>;
+    chooseBackupDirectory: () => Promise<BackupDirectorySelection>;
   };
   companyProfile: {
     get: () => Promise<CompanyProfile>;

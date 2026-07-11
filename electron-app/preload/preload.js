@@ -188,6 +188,16 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id) => ipcRenderer.invoke('contributionRecord.delete', id),
   },
 
+  settings: {
+    get: () => ipcRenderer.invoke('settings.get'),
+    payrollDefaults: () => ipcRenderer.invoke('settings.payrollDefaults'),
+    updateCompany: (payload) => ipcRenderer.invoke('settings.updateCompany', payload),
+    updatePayroll: (payload) => ipcRenderer.invoke('settings.updatePayroll', payload),
+    updateBackup: (payload) => ipcRenderer.invoke('settings.updateBackup', payload),
+    audit: (limit) => ipcRenderer.invoke('settings.audit', limit),
+    chooseBackupDirectory: () => ipcRenderer.invoke('settings.chooseBackupDirectory'),
+  },
+
   companyProfile: {
     get: () => ipcRenderer.invoke('companyProfile.get'),
     update: (payload) => ipcRenderer.invoke('companyProfile.update', payload),

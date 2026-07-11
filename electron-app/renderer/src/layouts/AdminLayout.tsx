@@ -25,7 +25,7 @@ const modulePermissions: Record<string, string> = {
   '/admin/government-contributions': 'contributions:manage',
   '/admin/reports': 'reports:view',
   '/admin/payslips': 'payslips:view',
-  '/admin/settings': 'users:manage',
+  '/admin/settings': 'settings:manage',
 };
 
 const allNavigation: NavigationItem[] = [
