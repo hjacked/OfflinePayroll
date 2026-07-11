@@ -27,6 +27,7 @@ export async function initDb(): Promise<Database> {
   await seedDefaultLeaveTypes(database);
   await seedCurrentYearLeaveBalances(database);
   await seedDefaultEarningTypes(database);
+  await seedDefaultDeductionTypes(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -407,6 +408,154 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS deduction_types (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      category TEXT NOT NULL DEFAULT 'other',
+      description TEXT,
+      calculation_type TEXT NOT NULL DEFAULT 'fixed',
+      default_amount REAL NOT NULL DEFAULT 0,
+      default_percentage REAL NOT NULL DEFAULT 0,
+      recurrence TEXT NOT NULL DEFAULT 'one-time',
+      priority INTEGER NOT NULL DEFAULT 100,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (category IN ('loan','statutory','company','advance','penalty','insurance','cooperative','other')),
+      CHECK (calculation_type IN ('fixed','percentage')),
+      CHECK (default_amount >= 0),
+      CHECK (default_percentage >= 0 AND default_percentage <= 100),
+      CHECK (recurrence IN ('recurring','one-time')),
+      CHECK (priority >= 0),
+      CHECK (is_active IN (0,1))
+    );
+
+    CREATE TABLE IF NOT EXISTS deduction_assignments (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      deduction_type_id TEXT NOT NULL,
+      amount REAL NOT NULL DEFAULT 0,
+      percentage REAL NOT NULL DEFAULT 0,
+      effective_from TEXT NOT NULL,
+      effective_to TEXT,
+      notes TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (deduction_type_id) REFERENCES deduction_types(id) ON DELETE RESTRICT,
+      CHECK (amount >= 0),
+      CHECK (percentage >= 0 AND percentage <= 100),
+      CHECK (effective_to IS NULL OR effective_to = '' OR effective_to >= effective_from),
+      CHECK (is_active IN (0,1))
+    );
+
+    CREATE TABLE IF NOT EXISTS employee_loans (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      deduction_type_id TEXT NOT NULL,
+      loan_number TEXT NOT NULL UNIQUE,
+      principal_amount REAL NOT NULL,
+      interest_rate REAL NOT NULL DEFAULT 0,
+      total_payable REAL NOT NULL,
+      loan_date TEXT NOT NULL,
+      first_deduction_date TEXT NOT NULL,
+      number_of_installments INTEGER NOT NULL,
+      deduction_frequency TEXT NOT NULL DEFAULT 'semimonthly',
+      installment_amount REAL NOT NULL,
+      outstanding_balance REAL NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      FOREIGN KEY (deduction_type_id) REFERENCES deduction_types(id) ON DELETE RESTRICT,
+      CHECK (principal_amount > 0),
+      CHECK (interest_rate >= 0 AND interest_rate <= 100),
+      CHECK (total_payable >= principal_amount),
+      CHECK (number_of_installments > 0),
+      CHECK (installment_amount > 0),
+      CHECK (outstanding_balance >= 0),
+      CHECK (deduction_frequency IN ('weekly','biweekly','semimonthly','monthly')),
+      CHECK (status IN ('draft','active','suspended','paid','cancelled'))
+    );
+
+    CREATE TABLE IF NOT EXISTS loan_installments (
+      id TEXT PRIMARY KEY,
+      loan_id TEXT NOT NULL,
+      installment_number INTEGER NOT NULL,
+      due_date TEXT NOT NULL,
+      amount_due REAL NOT NULL,
+      amount_paid REAL NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'scheduled',
+      transaction_id TEXT,
+      paid_at TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (loan_id) REFERENCES employee_loans(id) ON DELETE CASCADE,
+      UNIQUE (loan_id, installment_number),
+      CHECK (installment_number > 0),
+      CHECK (amount_due > 0),
+      CHECK (amount_paid >= 0),
+      CHECK (status IN ('scheduled','partial','paid','skipped'))
+    );
+
+    CREATE TABLE IF NOT EXISTS deduction_transactions (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      deduction_type_id TEXT NOT NULL,
+      assignment_id TEXT,
+      loan_id TEXT,
+      transaction_date TEXT NOT NULL,
+      payroll_period_id TEXT,
+      amount REAL NOT NULL,
+      reference TEXT,
+      notes TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      FOREIGN KEY (deduction_type_id) REFERENCES deduction_types(id) ON DELETE RESTRICT,
+      FOREIGN KEY (assignment_id) REFERENCES deduction_assignments(id) ON DELETE SET NULL,
+      FOREIGN KEY (loan_id) REFERENCES employee_loans(id) ON DELETE SET NULL,
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE SET NULL,
+      CHECK (amount > 0),
+      CHECK (status IN ('draft','approved','cancelled'))
+    );
+
+    CREATE TABLE IF NOT EXISTS loan_payment_allocations (
+      id TEXT PRIMARY KEY,
+      transaction_id TEXT NOT NULL,
+      installment_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (transaction_id) REFERENCES deduction_transactions(id) ON DELETE CASCADE,
+      FOREIGN KEY (installment_id) REFERENCES loan_installments(id) ON DELETE CASCADE,
+      UNIQUE (transaction_id, installment_id),
+      CHECK (amount > 0)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_deduction_types_active
+      ON deduction_types(is_active, priority, category, name);
+    CREATE INDEX IF NOT EXISTS idx_deduction_assignments_employee_dates
+      ON deduction_assignments(employee_id, effective_from, effective_to);
+    CREATE INDEX IF NOT EXISTS idx_deduction_assignments_type_active
+      ON deduction_assignments(deduction_type_id, is_active);
+    CREATE INDEX IF NOT EXISTS idx_employee_loans_employee_status
+      ON employee_loans(employee_id, status, first_deduction_date);
+    CREATE INDEX IF NOT EXISTS idx_loan_installments_due
+      ON loan_installments(loan_id, status, due_date);
+    CREATE INDEX IF NOT EXISTS idx_loan_payment_allocations_transaction
+      ON loan_payment_allocations(transaction_id, installment_id);
+    CREATE INDEX IF NOT EXISTS idx_deduction_transactions_employee_date
+      ON deduction_transactions(employee_id, transaction_date);
+    CREATE INDEX IF NOT EXISTS idx_deduction_transactions_type_status
+      ON deduction_transactions(deduction_type_id, status, transaction_date);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(
@@ -660,3 +809,30 @@ async function seedDefaultEarningTypes(db: Database): Promise<void> {
   }
 }
 
+async function seedDefaultDeductionTypes(db: Database): Promise<void> {
+  const defaults: Array<[
+    string, string, string, string, string, string, number, number, string, number
+  ]> = [
+    ['deduction_company_loan', 'CLOAN', 'Company Loan', 'loan', 'Company-funded employee loan.', 'fixed', 0, 0, 'recurring', 20],
+    ['deduction_salary_loan', 'SLOAN', 'Salary Loan', 'loan', 'Salary-backed employee loan.', 'fixed', 0, 0, 'recurring', 20],
+    ['deduction_emergency_loan', 'ELOAN', 'Emergency Loan', 'loan', 'Emergency assistance loan.', 'fixed', 0, 0, 'recurring', 20],
+    ['deduction_government_loan', 'GLOAN', 'Government Loan', 'loan', 'Government agency loan repayment.', 'fixed', 0, 0, 'recurring', 15],
+    ['deduction_cash_advance', 'CASHADV', 'Cash Advance', 'advance', 'Employee cash advance recovery.', 'fixed', 0, 0, 'recurring', 30],
+    ['deduction_cooperative', 'COOP', 'Cooperative Contribution', 'cooperative', 'Cooperative dues or savings contribution.', 'fixed', 0, 0, 'recurring', 40],
+    ['deduction_insurance', 'INS', 'Insurance Deduction', 'insurance', 'Employee insurance premium.', 'fixed', 0, 0, 'recurring', 50],
+    ['deduction_uniform', 'UNIFORM', 'Uniform Deduction', 'company', 'Authorized uniform cost deduction.', 'fixed', 0, 0, 'one-time', 60],
+    ['deduction_equipment', 'EQUIP', 'Equipment Deduction', 'company', 'Authorized equipment or property deduction.', 'fixed', 0, 0, 'one-time', 60],
+    ['deduction_other', 'OTHERDED', 'Other Authorized Deduction', 'other', 'Other employee-authorized deduction.', 'fixed', 0, 0, 'one-time', 100]
+  ];
+
+  for (const row of defaults) {
+    await db.run(
+      `INSERT OR IGNORE INTO deduction_types (
+        id, code, name, category, description, calculation_type,
+        default_amount, default_percentage, recurrence, priority,
+        is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      ...row,
+    );
+  }
+}

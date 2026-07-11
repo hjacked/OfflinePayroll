@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 type PortalModule = {
   title: string;
   description: string;
-  status: string;
+  status: 'Available' | 'Available soon';
   path?: string;
 };
 
@@ -24,14 +24,16 @@ const portalModules: PortalModule[] = [
   {
     title: 'Allowances and Other Income',
     description:
-      'Review assigned allowances, incentives, bonuses, commissions, and other earnings.',
-    status: 'Available soon',
+      'Review active allowances, approved bonuses, incentives, commissions, reimbursements, and salary adjustments.',
+    status: 'Available',
+    path: '/employee/earnings',
   },
   {
     title: 'Loans and Deductions',
     description:
-      'View active loans, installment deductions, outstanding balances, and other deductions.',
-    status: 'Available soon',
+      'Review active loans, installment schedules, outstanding balances, recurring deductions, and deduction history.',
+    status: 'Available',
+    path: '/employee/deductions',
   },
   {
     title: 'Government Contributions',
@@ -74,25 +76,36 @@ export default function EmployeePortal() {
       </div>
 
       <div className="card-grid">
-        {portalModules.map((module) => (
-          <article className="card" key={module.title}>
-            <div className="card-header">
-              <h2>{module.title}</h2>
+        {portalModules.map((module) => {
+          const isAvailable =
+            module.status === 'Available' && Boolean(module.path);
 
-              <span className="status-badge">
-                {module.status}
-              </span>
-            </div>
+          return (
+            <article className="card" key={module.title}>
+              <div className="card-header">
+                <h2>{module.title}</h2>
 
-            <p>{module.description}</p>
+                <span
+                  className={
+                    isAvailable
+                      ? 'status-badge status-badge--available'
+                      : 'status-badge'
+                  }
+                >
+                  {module.status}
+                </span>
+              </div>
 
-            {module.path && (
-              <Link className="module-link" to={module.path}>
-                Open module
-              </Link>
-            )}
-          </article>
-        ))}
+              <p>{module.description}</p>
+
+              {isAvailable && module.path && (
+                <Link className="module-link" to={module.path}>
+                  Open module
+                </Link>
+              )}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

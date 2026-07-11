@@ -3,6 +3,15 @@ import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminModulePage from './pages/admin/AdminModulePage';
+import DeductionAssignmentsPage from './pages/admin/deductions/DeductionAssignmentsPage';
+import DeductionTransactionDetailsPage from './pages/admin/deductions/DeductionTransactionDetailsPage';
+import DeductionTransactionFormPage from './pages/admin/deductions/DeductionTransactionFormPage';
+import DeductionTypesPage from './pages/admin/deductions/DeductionTypesPage';
+import DeductionsPage from './pages/admin/deductions/DeductionsPage';
+import LoanDetailsPage from './pages/admin/deductions/LoanDetailsPage';
+import LoanFormPage from './pages/admin/deductions/LoanFormPage';
+import LoansPage from './pages/admin/deductions/LoansPage';
+import EmployeeDeductionsPage from './pages/employee/deductions/EmployeeDeductionsPage';
 import EarningAssignmentsPage from './pages/admin/earnings/EarningAssignmentsPage';
 import EarningTransactionDetailsPage from './pages/admin/earnings/EarningTransactionDetailsPage';
 import EarningTransactionFormPage from './pages/admin/earnings/EarningTransactionFormPage';
@@ -33,6 +42,7 @@ import './employee-management.css';
 import './timekeeping.css';
 import './leave-management.css';
 import './earnings.css';
+import './deductions.css';
 
 export default function App() {
   return (
@@ -68,10 +78,16 @@ export default function App() {
         <Route path="earnings/new" element={<EarningTransactionFormPage />} />
         <Route path="earnings/:id" element={<EarningTransactionDetailsPage />} />
         <Route path="earnings/:id/edit" element={<EarningTransactionFormPage />} />
-        <Route
-          path="deductions"
-          element={<AdminModulePage moduleKey="deductions" />}
-        />
+        <Route path="deductions" element={<DeductionsPage />} />
+        <Route path="deductions/types" element={<DeductionTypesPage />} />
+        <Route path="deductions/assignments" element={<DeductionAssignmentsPage />} />
+        <Route path="deductions/loans" element={<LoansPage />} />
+        <Route path="deductions/loans/new" element={<LoanFormPage />} />
+        <Route path="deductions/loans/:id" element={<LoanDetailsPage />} />
+        <Route path="deductions/loans/:id/edit" element={<LoanFormPage />} />
+        <Route path="deductions/new" element={<DeductionTransactionFormPage />} />
+        <Route path="deductions/:id" element={<DeductionTransactionDetailsPage />} />
+        <Route path="deductions/:id/edit" element={<DeductionTransactionFormPage />} />
         <Route
           path="government-contributions"
           element={<AdminModulePage moduleKey="government-contributions" />}
@@ -97,6 +113,7 @@ export default function App() {
         <Route path="leave/new" element={<EmployeeLeaveFormPage />} />
         <Route path="leave/:id" element={<EmployeeLeaveDetailsPage />} />
         <Route path="earnings" element={<EmployeeEarningsPage />} />
+        <Route path="deductions" element={<EmployeeDeductionsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

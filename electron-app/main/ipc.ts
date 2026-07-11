@@ -19,6 +19,35 @@ import {
   updateWorkSchedule,
 } from './services/attendance-service';
 import {
+  createDeductionAssignment,
+  createDeductionTransaction,
+  createDeductionType,
+  createEmployeeLoan,
+  deleteDeductionAssignment,
+  deleteDeductionTransaction,
+  deleteDeductionType,
+  deleteEmployeeLoan,
+  getDeductionAssignment,
+  getDeductionAssignments,
+  getDeductionSummary,
+  getDeductionTransaction,
+  getDeductionTransactions,
+  getDeductionType,
+  getDeductionTypes,
+  getEmployeeLoan,
+  getEmployeeLoans,
+  getLoanSummary,
+  recordLoanPayment,
+  setDeductionAssignmentStatus,
+  setDeductionTransactionStatus,
+  setDeductionTypeStatus,
+  setEmployeeLoanStatus,
+  updateDeductionAssignment,
+  updateDeductionTransaction,
+  updateDeductionType,
+  updateEmployeeLoan,
+} from './services/deductions-service';
+import {
   createEarningAssignment,
   createEarningTransaction,
   createEarningType,
@@ -336,6 +365,101 @@ export function setupIpc(ipcMain: IpcMain): void {
   );
   registerHandler(ipcMain, 'earningTransaction.delete', async (_event, id: unknown) =>
     deleteEarningTransaction(requireId(id, 'earning transaction')),
+  );
+
+
+
+  registerHandler(ipcMain, 'deductionType.list', async (_event, filters: unknown) =>
+    getDeductionTypes(filters),
+  );
+  registerHandler(ipcMain, 'deductionType.get', async (_event, id: unknown) =>
+    getDeductionType(requireId(id, 'deduction type')),
+  );
+  registerHandler(ipcMain, 'deductionType.create', async (_event, payload: unknown) =>
+    createDeductionType(payload),
+  );
+  registerHandler(ipcMain, 'deductionType.update', async (_event, id: unknown, payload: unknown) =>
+    updateDeductionType(requireId(id, 'deduction type'), payload),
+  );
+  registerHandler(ipcMain, 'deductionType.setStatus', async (_event, id: unknown, active: unknown) => {
+    if (typeof active !== 'boolean') throw new Error('Deduction type status must be true or false.');
+    return setDeductionTypeStatus(requireId(id, 'deduction type'), active);
+  });
+  registerHandler(ipcMain, 'deductionType.delete', async (_event, id: unknown) =>
+    deleteDeductionType(requireId(id, 'deduction type')),
+  );
+
+  registerHandler(ipcMain, 'deductionAssignment.list', async (_event, filters: unknown) =>
+    getDeductionAssignments(filters),
+  );
+  registerHandler(ipcMain, 'deductionAssignment.get', async (_event, id: unknown) =>
+    getDeductionAssignment(requireId(id, 'deduction assignment')),
+  );
+  registerHandler(ipcMain, 'deductionAssignment.create', async (_event, payload: unknown) =>
+    createDeductionAssignment(payload),
+  );
+  registerHandler(ipcMain, 'deductionAssignment.update', async (_event, id: unknown, payload: unknown) =>
+    updateDeductionAssignment(requireId(id, 'deduction assignment'), payload),
+  );
+  registerHandler(ipcMain, 'deductionAssignment.setStatus', async (_event, id: unknown, active: unknown) => {
+    if (typeof active !== 'boolean') throw new Error('Deduction assignment status must be true or false.');
+    return setDeductionAssignmentStatus(requireId(id, 'deduction assignment'), active);
+  });
+  registerHandler(ipcMain, 'deductionAssignment.delete', async (_event, id: unknown) =>
+    deleteDeductionAssignment(requireId(id, 'deduction assignment')),
+  );
+
+  registerHandler(ipcMain, 'loan.list', async (_event, filters: unknown) =>
+    getEmployeeLoans(filters),
+  );
+  registerHandler(ipcMain, 'loan.get', async (_event, id: unknown) =>
+    getEmployeeLoan(requireId(id, 'loan')),
+  );
+  registerHandler(ipcMain, 'loan.summary', async (_event, filters: unknown) =>
+    getLoanSummary(filters),
+  );
+  registerHandler(ipcMain, 'loan.create', async (_event, payload: unknown) =>
+    createEmployeeLoan(payload),
+  );
+  registerHandler(ipcMain, 'loan.update', async (_event, id: unknown, payload: unknown) =>
+    updateEmployeeLoan(requireId(id, 'loan'), payload),
+  );
+  registerHandler(ipcMain, 'loan.setStatus', async (_event, id: unknown, status: unknown) => {
+    if (!['draft','active','suspended','paid','cancelled'].includes(String(status))) {
+      throw new Error('Invalid loan status.');
+    }
+    return setEmployeeLoanStatus(requireId(id, 'loan'), status as 'draft' | 'active' | 'suspended' | 'paid' | 'cancelled');
+  });
+  registerHandler(ipcMain, 'loan.recordPayment', async (_event, id: unknown, payload: unknown) =>
+    recordLoanPayment(requireId(id, 'loan'), payload),
+  );
+  registerHandler(ipcMain, 'loan.delete', async (_event, id: unknown) =>
+    deleteEmployeeLoan(requireId(id, 'loan')),
+  );
+
+  registerHandler(ipcMain, 'deductionTransaction.list', async (_event, filters: unknown) =>
+    getDeductionTransactions(filters),
+  );
+  registerHandler(ipcMain, 'deductionTransaction.get', async (_event, id: unknown) =>
+    getDeductionTransaction(requireId(id, 'deduction transaction')),
+  );
+  registerHandler(ipcMain, 'deductionTransaction.summary', async (_event, filters: unknown) =>
+    getDeductionSummary(filters),
+  );
+  registerHandler(ipcMain, 'deductionTransaction.create', async (_event, payload: unknown) =>
+    createDeductionTransaction(payload),
+  );
+  registerHandler(ipcMain, 'deductionTransaction.update', async (_event, id: unknown, payload: unknown) =>
+    updateDeductionTransaction(requireId(id, 'deduction transaction'), payload),
+  );
+  registerHandler(ipcMain, 'deductionTransaction.setStatus', async (_event, id: unknown, status: unknown) => {
+    if (status !== 'draft' && status !== 'approved' && status !== 'cancelled') {
+      throw new Error('Invalid deduction transaction status.');
+    }
+    return setDeductionTransactionStatus(requireId(id, 'deduction transaction'), status);
+  });
+  registerHandler(ipcMain, 'deductionTransaction.delete', async (_event, id: unknown) =>
+    deleteDeductionTransaction(requireId(id, 'deduction transaction')),
   );
 
   registerHandler(

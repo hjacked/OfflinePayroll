@@ -24,6 +24,24 @@ import type {
   LeaveTypeInput,
 } from './models/Leave';
 import type {
+  DeductionAssignment,
+  DeductionAssignmentFilters,
+  DeductionAssignmentInput,
+  DeductionSummary,
+  DeductionTransaction,
+  DeductionTransactionFilters,
+  DeductionTransactionInput,
+  DeductionTransactionStatus,
+  DeductionType,
+  DeductionTypeFilters,
+  DeductionTypeInput,
+  EmployeeLoan,
+  EmployeeLoanFilters,
+  EmployeeLoanInput,
+  LoanStatus,
+  LoanSummary,
+} from './models/Deductions';
+import type {
   EarningAssignment,
   EarningAssignmentFilters,
   EarningAssignmentInput,
@@ -148,6 +166,47 @@ export interface PayrollApi {
     create: (payload: EarningTransactionInput) => Promise<EarningTransaction>;
     update: (id: string, payload: EarningTransactionInput) => Promise<EarningTransaction>;
     setStatus: (id: string, status: EarningTransactionStatus) => Promise<EarningTransaction>;
+    delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
+  };
+  deductionType: {
+    list: (filters?: DeductionTypeFilters) => Promise<{ data: DeductionType[]; total: number }>;
+    get: (id: string) => Promise<DeductionType | null>;
+    create: (payload: DeductionTypeInput) => Promise<DeductionType>;
+    update: (id: string, payload: DeductionTypeInput) => Promise<DeductionType>;
+    setStatus: (id: string, active: boolean) => Promise<DeductionType>;
+    delete: (id: string) => Promise<{ id: string; deactivated: boolean }>;
+  };
+  deductionAssignment: {
+    list: (filters?: DeductionAssignmentFilters) => Promise<{ data: DeductionAssignment[]; total: number }>;
+    get: (id: string) => Promise<DeductionAssignment | null>;
+    create: (payload: DeductionAssignmentInput) => Promise<DeductionAssignment>;
+    update: (id: string, payload: DeductionAssignmentInput) => Promise<DeductionAssignment>;
+    setStatus: (id: string, active: boolean) => Promise<DeductionAssignment>;
+    delete: (id: string) => Promise<{ id: string; deactivated: boolean }>;
+  };
+  loan: {
+    list: (filters?: EmployeeLoanFilters) => Promise<{ data: EmployeeLoan[]; total: number }>;
+    get: (id: string) => Promise<EmployeeLoan | null>;
+    summary: (filters?: EmployeeLoanFilters) => Promise<LoanSummary>;
+    create: (payload: EmployeeLoanInput) => Promise<EmployeeLoan>;
+    update: (id: string, payload: EmployeeLoanInput) => Promise<EmployeeLoan>;
+    setStatus: (id: string, status: LoanStatus) => Promise<EmployeeLoan>;
+    recordPayment: (id: string, payload: {
+      amount: number;
+      transaction_date: string;
+      payroll_period_id?: string;
+      reference?: string;
+      notes?: string;
+    }) => Promise<{ loan: EmployeeLoan; transaction: DeductionTransaction }>;
+    delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
+  };
+  deductionTransaction: {
+    list: (filters?: DeductionTransactionFilters) => Promise<{ data: DeductionTransaction[]; total: number }>;
+    get: (id: string) => Promise<DeductionTransaction | null>;
+    summary: (filters?: DeductionTransactionFilters) => Promise<DeductionSummary>;
+    create: (payload: DeductionTransactionInput) => Promise<DeductionTransaction>;
+    update: (id: string, payload: DeductionTransactionInput) => Promise<DeductionTransaction>;
+    setStatus: (id: string, status: DeductionTransactionStatus) => Promise<DeductionTransaction>;
     delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
   };
   payroll: {

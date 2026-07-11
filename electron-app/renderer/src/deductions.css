@@ -1,0 +1,69 @@
+.deductions-page { display: grid; gap: 20px; }
+.deductions-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.deductions-heading span { display: block; color: #64748b; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.deductions-heading h2 { margin: 6px 0 8px; font-size: 28px; color: #0f172a; }
+.deductions-heading p { margin: 0; color: #64748b; }
+.deductions-heading__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.deductions-primary-link, .deductions-secondary-link, .deductions-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #cbd5e1; text-decoration: none; font-weight: 700; cursor: pointer; }
+.deductions-primary-link, .deductions-button--primary { background: #0f172a; color: #fff; border-color: #0f172a; }
+.deductions-secondary-link, .deductions-button { background: #fff; color: #0f172a; }
+.deductions-button:disabled { opacity: .5; cursor: not-allowed; }
+.deductions-alert { border-radius: 10px; padding: 12px 14px; }
+.deductions-alert--error { color: #b91c1c; border: 1px solid #fecaca; background: #fff1f2; }
+.deductions-alert--success { color: #166534; border: 1px solid #bbf7d0; background: #f0fdf4; }
+.deductions-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.deductions-summary-card { padding: 18px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 14px rgba(15, 23, 42, .04); }
+.deductions-summary-card span, .deductions-summary-card small { display: block; color: #64748b; }
+.deductions-summary-card strong { display: block; margin: 8px 0 4px; font-size: 24px; color: #0f172a; }
+.deductions-toolbar { display: grid; grid-template-columns: 2fr repeat(5, minmax(140px, 1fr)); gap: 12px; padding: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; }
+.deductions-field { display: grid; gap: 6px; }
+.deductions-field span { font-size: 12px; font-weight: 700; color: #475569; }
+.deductions-field input, .deductions-field select, .deductions-field textarea { width: 100%; box-sizing: border-box; min-height: 40px; padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #0f172a; }
+.deductions-field textarea { min-height: 100px; resize: vertical; }
+.deductions-table-card, .deductions-form-card, .deductions-detail-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+.deductions-table-card__header, .deductions-form-card__header, .deductions-detail-card__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; padding: 18px; border-bottom: 1px solid #e2e8f0; }
+.deductions-table-card__header h3, .deductions-form-card__header h3, .deductions-detail-card__header h3 { margin: 0 0 4px; color: #0f172a; }
+.deductions-table-card__header p, .deductions-form-card__header p, .deductions-detail-card__header p { margin: 0; color: #64748b; }
+.deductions-table-wrap { overflow-x: auto; }
+.deductions-table { width: 100%; border-collapse: collapse; min-width: 980px; }
+.deductions-table th, .deductions-table td { padding: 12px 14px; border-bottom: 1px solid #eef2f7; text-align: left; vertical-align: top; }
+.deductions-table th { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .04em; background: #f8fafc; }
+.deductions-table td { color: #334155; }
+.deductions-person-cell, .deductions-type-cell { display: grid; gap: 3px; }
+.deductions-person-cell strong, .deductions-type-cell strong { color: #0f172a; }
+.deductions-person-cell span, .deductions-type-cell span { font-size: 12px; color: #64748b; }
+.deductions-amount { font-weight: 800; color: #0f172a; white-space: nowrap; }
+.deductions-status, .deductions-chip { display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: capitalize; }
+.deductions-status--approved, .deductions-status--active, .deductions-status--paid { background: #dcfce7; color: #166534; }
+.deductions-status--draft, .deductions-status--scheduled { background: #e2e8f0; color: #475569; }
+.deductions-status--cancelled, .deductions-status--rejected { background: #fee2e2; color: #991b1b; }
+.deductions-status--suspended, .deductions-status--partial { background: #fef3c7; color: #92400e; }
+.deductions-chip { background: #eff6ff; color: #1d4ed8; }
+.deductions-row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.deductions-row-actions a, .deductions-row-actions button { border: 0; background: transparent; padding: 0; color: #2563eb; text-decoration: none; cursor: pointer; font: inherit; }
+.deductions-empty-state { padding: 40px 20px; text-align: center; color: #64748b; }
+.deductions-form { padding: 18px; display: grid; gap: 16px; }
+.deductions-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.deductions-form-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.deductions-form-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.deductions-checkbox { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; }
+.deductions-checkbox input { width: auto; min-height: auto; }
+.deductions-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 18px; }
+.deductions-detail-item { display: grid; gap: 4px; }
+.deductions-detail-item span { color: #64748b; font-size: 12px; }
+.deductions-detail-item strong { color: #0f172a; }
+.deductions-progress { height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.deductions-progress > span { display: block; height: 100%; background: #0f172a; }
+.deductions-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.deductions-tabs a { padding: 8px 12px; border-radius: 9px; border: 1px solid #cbd5e1; background: #fff; color: #0f172a; text-decoration: none; font-weight: 700; }
+@media (max-width: 1100px) {
+  .deductions-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .deductions-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .deductions-form-grid--three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .deductions-heading { flex-direction: column; }
+  .deductions-summary-grid, .deductions-toolbar, .deductions-form-grid, .deductions-form-grid--three, .deductions-detail-grid { grid-template-columns: 1fr; }
+  .deductions-heading__actions, .deductions-form-actions { width: 100%; }
+  .deductions-primary-link, .deductions-secondary-link, .deductions-button { flex: 1; }
+}
