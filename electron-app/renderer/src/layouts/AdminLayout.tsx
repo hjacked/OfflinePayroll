@@ -29,7 +29,9 @@ const navigation = [
 ];
 
 function getPageTitle(pathname: string): string {
-  const currentItem = navigation.find((item) => pathname === item.path);
+  const currentItem = navigation.find(
+    (item) => pathname === item.path || pathname.startsWith(`${item.path}/`),
+  );
   return currentItem?.label ?? 'Payroll Administration';
 }
 

@@ -1,15 +1,19 @@
-export interface PayrollEmployeeSummary {
-  id: string;
-  name: string;
-  email: string;
-  department?: string;
-  role_title?: string;
-}
+import type {
+  Employee,
+  EmployeeInput,
+  EmployeeListFilters,
+} from './models/Employee';
 
 export interface PayrollApi {
   employee: {
-    list: () => Promise<{ data: PayrollEmployeeSummary[]; total: number }>;
-    get: (id: string) => Promise<PayrollEmployeeSummary | null>;
+    list: (
+      filters?: EmployeeListFilters,
+    ) => Promise<{ data: Employee[]; total: number }>;
+    get: (id: string) => Promise<Employee | null>;
+    create: (payload: EmployeeInput) => Promise<Employee>;
+    update: (id: string, payload: EmployeeInput) => Promise<Employee>;
+    setStatus: (id: string, active: boolean) => Promise<Employee>;
+    delete: (id: string) => Promise<{ id: string }>;
   };
   payroll: {
     createPeriod: (payload: {

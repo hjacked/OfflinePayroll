@@ -3,10 +3,13 @@ import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminModulePage from './pages/admin/AdminModulePage';
-import AdminPortal from './pages/AdminPortal';
+import EmployeeDetailsPage from './pages/admin/employees/EmployeeDetailsPage';
+import EmployeeFormPage from './pages/admin/employees/EmployeeFormPage';
+import EmployeeListPage from './pages/admin/employees/EmployeeListPage';
 import EmployeePortal from './pages/EmployeePortal';
 import PayrollPortal from './pages/PayrollPortal';
 import './admin-shell.css';
+import './employee-management.css';
 
 export default function App() {
   return (
@@ -16,7 +19,10 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="employees" element={<AdminPortal />} />
+        <Route path="employees" element={<EmployeeListPage />} />
+        <Route path="employees/new" element={<EmployeeFormPage />} />
+        <Route path="employees/:id" element={<EmployeeDetailsPage />} />
+        <Route path="employees/:id/edit" element={<EmployeeFormPage />} />
         <Route
           path="timekeeping"
           element={<AdminModulePage moduleKey="timekeeping" />}

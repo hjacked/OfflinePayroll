@@ -1,7 +1,11 @@
 import type { IpcMain } from 'electron';
 import {
+  createEmployee,
+  deleteEmployee,
   getAllEmployees,
   getEmployee,
+  setEmployeeStatus,
+  updateEmployee,
 } from './services/employee-service';
 import {
   createPayrollPeriod,
@@ -9,13 +13,39 @@ import {
 } from './services/payroll-service';
 
 export function setupIpc(ipcMain: IpcMain): void {
-  registerHandler(ipcMain, 'employee.list', async () => getAllEmployees());
+  registerHandler(ipcMain, 'employee.list', async (_event, filters: unknown) =>
+    getAllEmployees(filters),
+  );
 
   registerHandler(ipcMain, 'employee.get', async (_event, id: unknown) => {
-    if (typeof id !== 'string' || !id.trim()) {
-      throw new Error('A valid employee ID is required.');
-    }
-    return getEmployee(id);
+    return getEmployee(requireEmployeeId(id));
+  });
+
+  registerHandler(ipcMain, 'employee.create', async (_event, payload: unknown) => {
+    return createEmployee(payload);
+  });
+
+  registerHandler(
+    ipcMain,
+    'employee.update',
+    async (_event, id: unknown, payload: unknown) => {
+      return updateEmployee(requireEmployeeId(id), payload);
+    },
+  );
+
+  registerHandler(
+    ipcMain,
+    'employee.setStatus',
+    async (_event, id: unknown, active: unknown) => {
+      if (typeof active !== 'boolean') {
+        throw new Error('Employee status must be true or false.');
+      }
+      return setEmployeeStatus(requireEmployeeId(id), active);
+    },
+  );
+
+  registerHandler(ipcMain, 'employee.delete', async (_event, id: unknown) => {
+    return deleteEmployee(requireEmployeeId(id));
   });
 
   registerHandler(
@@ -30,6 +60,13 @@ export function setupIpc(ipcMain: IpcMain): void {
     }
     return runPayroll(periodId);
   });
+}
+
+function requireEmployeeId(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error('A valid employee ID is required.');
+  }
+  return value.trim();
 }
 
 function registerHandler(
