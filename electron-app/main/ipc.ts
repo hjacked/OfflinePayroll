@@ -27,6 +27,21 @@ import {
   updateEmployee,
 } from './services/employee-service';
 import {
+  adjustLeaveBalance,
+  cancelLeaveRequest,
+  createLeaveRequest,
+  createLeaveType,
+  deleteLeaveType,
+  getLeaveBalances,
+  getLeaveRequest,
+  getLeaveRequests,
+  getLeaveSummary,
+  getLeaveTypes,
+  reviewLeaveRequest,
+  updateLeaveRequest,
+  updateLeaveType,
+} from './services/leave-service';
+import {
   createPayrollPeriod,
   runPayroll,
 } from './services/payroll-service';
@@ -149,6 +164,70 @@ export function setupIpc(ipcMain: IpcMain): void {
     'attendanceCorrection.review',
     async (_event, id: unknown, payload: unknown) =>
       reviewAttendanceCorrection(requireId(id, 'attendance correction'), payload),
+  );
+
+  registerHandler(ipcMain, 'leaveType.list', async (_event, filters: unknown) =>
+    getLeaveTypes(filters),
+  );
+
+  registerHandler(ipcMain, 'leaveType.create', async (_event, payload: unknown) =>
+    createLeaveType(payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'leaveType.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateLeaveType(requireId(id, 'leave type'), payload),
+  );
+
+  registerHandler(ipcMain, 'leaveType.delete', async (_event, id: unknown) =>
+    deleteLeaveType(requireId(id, 'leave type')),
+  );
+
+  registerHandler(ipcMain, 'leaveBalance.list', async (_event, filters: unknown) =>
+    getLeaveBalances(filters),
+  );
+
+  registerHandler(ipcMain, 'leaveBalance.adjust', async (_event, payload: unknown) =>
+    adjustLeaveBalance(payload),
+  );
+
+  registerHandler(ipcMain, 'leaveRequest.list', async (_event, filters: unknown) =>
+    getLeaveRequests(filters),
+  );
+
+  registerHandler(ipcMain, 'leaveRequest.get', async (_event, id: unknown) =>
+    getLeaveRequest(requireId(id, 'leave request')),
+  );
+
+  registerHandler(ipcMain, 'leaveRequest.summary', async (_event, filters: unknown) =>
+    getLeaveSummary(filters),
+  );
+
+  registerHandler(ipcMain, 'leaveRequest.create', async (_event, payload: unknown) =>
+    createLeaveRequest(payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'leaveRequest.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateLeaveRequest(requireId(id, 'leave request'), payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'leaveRequest.review',
+    async (_event, id: unknown, payload: unknown) =>
+      reviewLeaveRequest(requireId(id, 'leave request'), payload),
+  );
+
+  registerHandler(
+    ipcMain,
+    'leaveRequest.cancel',
+    async (_event, id: unknown, payload: unknown) =>
+      cancelLeaveRequest(requireId(id, 'leave request'), payload),
   );
 
   registerHandler(

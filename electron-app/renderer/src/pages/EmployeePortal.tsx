@@ -1,7 +1,10 @@
+import { Link } from 'react-router-dom';
+
 type PortalModule = {
   title: string;
   description: string;
   status: string;
+  path?: string;
 };
 
 const portalModules: PortalModule[] = [
@@ -15,7 +18,8 @@ const portalModules: PortalModule[] = [
     title: 'Leave Management',
     description:
       'View leave balances, submit leave applications, and monitor approval status.',
-    status: 'Available soon',
+    status: 'Available',
+    path: '/employee/leave',
   },
   {
     title: 'Allowances and Other Income',
@@ -81,6 +85,12 @@ export default function EmployeePortal() {
             </div>
 
             <p>{module.description}</p>
+
+            {module.path && (
+              <Link className="module-link" to={module.path}>
+                Open module
+              </Link>
+            )}
           </article>
         ))}
       </div>

@@ -12,11 +12,20 @@ import AttendanceFormPage from './pages/admin/timekeeping/AttendanceFormPage';
 import AttendanceImportPage from './pages/admin/timekeeping/AttendanceImportPage';
 import TimekeepingPage from './pages/admin/timekeeping/TimekeepingPage';
 import WorkSchedulesPage from './pages/admin/timekeeping/WorkSchedulesPage';
+import LeaveBalancesPage from './pages/admin/leave/LeaveBalancesPage';
+import LeaveManagementPage from './pages/admin/leave/LeaveManagementPage';
+import LeaveRequestDetailsPage from './pages/admin/leave/LeaveRequestDetailsPage';
+import LeaveRequestFormPage from './pages/admin/leave/LeaveRequestFormPage';
+import LeaveTypesPage from './pages/admin/leave/LeaveTypesPage';
+import EmployeeLeaveDetailsPage from './pages/employee/leave/EmployeeLeaveDetailsPage';
+import EmployeeLeaveFormPage from './pages/employee/leave/EmployeeLeaveFormPage';
+import EmployeeLeavePage from './pages/employee/leave/EmployeeLeavePage';
 import EmployeePortal from './pages/EmployeePortal';
 import PayrollPortal from './pages/PayrollPortal';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
+import './leave-management.css';
 
 export default function App() {
   return (
@@ -40,10 +49,12 @@ export default function App() {
         />
         <Route path="timekeeping/:id" element={<AttendanceDetailsPage />} />
         <Route path="timekeeping/:id/edit" element={<AttendanceFormPage />} />
-        <Route
-          path="leave-management"
-          element={<AdminModulePage moduleKey="leave-management" />}
-        />
+        <Route path="leave-management" element={<LeaveManagementPage />} />
+        <Route path="leave-management/new" element={<LeaveRequestFormPage />} />
+        <Route path="leave-management/types" element={<LeaveTypesPage />} />
+        <Route path="leave-management/balances" element={<LeaveBalancesPage />} />
+        <Route path="leave-management/:id" element={<LeaveRequestDetailsPage />} />
+        <Route path="leave-management/:id/edit" element={<LeaveRequestFormPage />} />
         <Route
           path="earnings"
           element={<AdminModulePage moduleKey="earnings" />}
@@ -73,6 +84,9 @@ export default function App() {
 
       <Route path="/employee" element={<EmployeePortalLayout />}>
         <Route index element={<EmployeePortal />} />
+        <Route path="leave" element={<EmployeeLeavePage />} />
+        <Route path="leave/new" element={<EmployeeLeaveFormPage />} />
+        <Route path="leave/:id" element={<EmployeeLeaveDetailsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

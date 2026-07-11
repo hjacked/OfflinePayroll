@@ -13,6 +13,17 @@ import type {
   WorkScheduleInput,
 } from './models/Attendance';
 import type {
+  LeaveBalance,
+  LeaveBalanceAdjustmentInput,
+  LeaveBalanceFilters,
+  LeaveRequest,
+  LeaveRequestFilters,
+  LeaveRequestInput,
+  LeaveSummary,
+  LeaveType,
+  LeaveTypeInput,
+} from './models/Leave';
+import type {
   Employee,
   EmployeeInput,
   EmployeeListFilters,
@@ -66,6 +77,40 @@ export interface PayrollApi {
         reviewer_notes: string;
       },
     ) => Promise<AttendanceCorrection>;
+  };
+  leaveType: {
+    list: (filters?: {
+      include_inactive?: boolean;
+    }) => Promise<{ data: LeaveType[]; total: number }>;
+    create: (payload: LeaveTypeInput) => Promise<LeaveType>;
+    update: (id: string, payload: LeaveTypeInput) => Promise<LeaveType>;
+    delete: (id: string) => Promise<{ id: string; deactivated: boolean }>;
+  };
+  leaveBalance: {
+    list: (
+      filters?: LeaveBalanceFilters,
+    ) => Promise<{ data: LeaveBalance[]; total: number }>;
+    adjust: (payload: LeaveBalanceAdjustmentInput) => Promise<LeaveBalance>;
+  };
+  leaveRequest: {
+    list: (
+      filters?: LeaveRequestFilters,
+    ) => Promise<{ data: LeaveRequest[]; total: number }>;
+    get: (id: string) => Promise<LeaveRequest | null>;
+    summary: (filters?: LeaveRequestFilters) => Promise<LeaveSummary>;
+    create: (payload: LeaveRequestInput) => Promise<LeaveRequest>;
+    update: (id: string, payload: LeaveRequestInput) => Promise<LeaveRequest>;
+    review: (
+      id: string,
+      payload: {
+        decision: 'approved' | 'rejected';
+        reviewer_notes: string;
+      },
+    ) => Promise<LeaveRequest>;
+    cancel: (
+      id: string,
+      payload?: { reason: string },
+    ) => Promise<LeaveRequest>;
   };
   payroll: {
     createPeriod: (payload: {

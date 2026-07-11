@@ -24,6 +24,8 @@ export async function initDb(): Promise<Database> {
   await ensureSchema(database);
   await seedInitialData(database);
   await seedDefaultWorkSchedule(database);
+  await seedDefaultLeaveTypes(database);
+  await seedCurrentYearLeaveBalances(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -205,6 +207,123 @@ async function ensureSchema(db: Database): Promise<void> {
       ON attendance_corrections(status, work_date);
   `);
 
+  await migrateAttendanceTable(db);
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS leave_types (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      is_paid INTEGER NOT NULL DEFAULT 1,
+      track_balance INTEGER NOT NULL DEFAULT 1,
+      annual_credit REAL NOT NULL DEFAULT 0,
+      allow_half_day INTEGER NOT NULL DEFAULT 1,
+      require_attachment INTEGER NOT NULL DEFAULT 0,
+      advance_notice_days INTEGER NOT NULL DEFAULT 0,
+      allow_carry_over INTEGER NOT NULL DEFAULT 0,
+      max_carry_over REAL NOT NULL DEFAULT 0,
+      min_service_months INTEGER NOT NULL DEFAULT 0,
+      gender_eligibility TEXT NOT NULL DEFAULT 'all',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (is_paid IN (0, 1)),
+      CHECK (track_balance IN (0, 1)),
+      CHECK (annual_credit >= 0),
+      CHECK (allow_half_day IN (0, 1)),
+      CHECK (require_attachment IN (0, 1)),
+      CHECK (advance_notice_days >= 0),
+      CHECK (allow_carry_over IN (0, 1)),
+      CHECK (max_carry_over >= 0),
+      CHECK (min_service_months >= 0),
+      CHECK (gender_eligibility IN ('all', 'female', 'male')),
+      CHECK (is_active IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS employee_leave_balances (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      leave_type_id TEXT NOT NULL,
+      balance_year INTEGER NOT NULL,
+      opening_balance REAL NOT NULL DEFAULT 0,
+      earned REAL NOT NULL DEFAULT 0,
+      adjustments REAL NOT NULL DEFAULT 0,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (leave_type_id) REFERENCES leave_types(id) ON DELETE CASCADE,
+      UNIQUE (employee_id, leave_type_id, balance_year),
+      CHECK (balance_year >= 2000 AND balance_year <= 2200)
+    );
+
+    CREATE TABLE IF NOT EXISTS leave_balance_adjustments (
+      id TEXT PRIMARY KEY,
+      balance_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      reason TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (balance_id) REFERENCES employee_leave_balances(id) ON DELETE CASCADE,
+      CHECK (amount <> 0)
+    );
+
+    CREATE TABLE IF NOT EXISTS leave_requests (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      leave_type_id TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      duration_type TEXT NOT NULL DEFAULT 'full-day',
+      total_days REAL NOT NULL,
+      reason TEXT NOT NULL,
+      attachment_reference TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      reviewer_notes TEXT,
+      reviewed_at TEXT,
+      cancelled_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      FOREIGN KEY (leave_type_id) REFERENCES leave_types(id) ON DELETE RESTRICT,
+      CHECK (end_date >= start_date),
+      CHECK (duration_type IN ('full-day', 'half-day-am', 'half-day-pm')),
+      CHECK (total_days > 0),
+      CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled'))
+    );
+
+    CREATE TABLE IF NOT EXISTS leave_attendance_snapshots (
+      id TEXT PRIMARY KEY,
+      leave_request_id TEXT NOT NULL,
+      work_date TEXT NOT NULL,
+      attendance_id TEXT NOT NULL,
+      created_new INTEGER NOT NULL DEFAULT 0,
+      prior_json TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id) ON DELETE CASCADE,
+      CHECK (created_new IN (0, 1)),
+      UNIQUE (leave_request_id, work_date)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_leave_types_active
+      ON leave_types(is_active, name);
+
+    CREATE INDEX IF NOT EXISTS idx_leave_balances_employee_year
+      ON employee_leave_balances(employee_id, balance_year);
+
+    CREATE INDEX IF NOT EXISTS idx_leave_balances_type_year
+      ON employee_leave_balances(leave_type_id, balance_year);
+
+    CREATE INDEX IF NOT EXISTS idx_leave_requests_employee_dates
+      ON leave_requests(employee_id, start_date, end_date);
+
+    CREATE INDEX IF NOT EXISTS idx_leave_requests_status_dates
+      ON leave_requests(status, start_date, end_date);
+
+    CREATE INDEX IF NOT EXISTS idx_attendance_leave_request
+      ON attendance_records(leave_request_id);
+  `);
+
   await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
@@ -270,6 +389,15 @@ async function migrateEmployeesTable(db: Database): Promise<void> {
         `ALTER TABLE employees ADD COLUMN ${columnName} ${definition};`,
       );
     }
+  }
+}
+
+async function migrateAttendanceTable(db: Database): Promise<void> {
+  const columns = await db.all<{ name: string }[]>('PRAGMA table_info(attendance_records);');
+  const existingColumns = new Set(columns.map((column: { name: string }) => column.name));
+
+  if (!existingColumns.has('leave_request_id')) {
+    await db.exec('ALTER TABLE attendance_records ADD COLUMN leave_request_id TEXT;');
   }
 }
 
@@ -358,6 +486,62 @@ async function seedDefaultWorkSchedule(db: Database): Promise<void> {
     5,
     8,
     1,
+  );
+}
+
+async function seedDefaultLeaveTypes(db: Database): Promise<void> {
+  const defaults: Array<[
+    string, string, string, string, number, number, number, number, number, number, number, number, number, string
+  ]> = [
+    ['leave_vacation', 'VL', 'Vacation Leave', 'Planned personal leave.', 1, 1, 15, 1, 0, 3, 1, 5, 0, 'all'],
+    ['leave_sick', 'SL', 'Sick Leave', 'Leave for illness, recovery, or medical care.', 1, 1, 15, 1, 1, 0, 1, 5, 0, 'all'],
+    ['leave_emergency', 'EL', 'Emergency Leave', 'Urgent leave for unforeseen personal matters.', 1, 1, 3, 1, 0, 0, 0, 0, 0, 'all'],
+    ['leave_maternity', 'ML', 'Maternity Leave', 'Configurable maternity leave entitlement.', 1, 0, 0, 0, 1, 0, 0, 0, 0, 'female'],
+    ['leave_paternity', 'PL', 'Paternity Leave', 'Configurable paternity leave entitlement.', 1, 0, 0, 0, 1, 0, 0, 0, 0, 'male'],
+    ['leave_solo_parent', 'SPL', 'Solo Parent Leave', 'Configurable parental leave for eligible solo parents.', 1, 1, 7, 1, 1, 3, 0, 0, 6, 'all'],
+    ['leave_bereavement', 'BL', 'Bereavement Leave', 'Leave following the death of an immediate family member.', 1, 0, 0, 1, 1, 0, 0, 0, 0, 'all'],
+    ['leave_service_incentive', 'SIL', 'Service Incentive Leave', 'Configurable service incentive leave credits.', 1, 1, 5, 1, 0, 3, 1, 5, 12, 'all'],
+    ['leave_special_women', 'SLW', 'Special Leave for Women', 'Configurable special leave for qualified women.', 1, 0, 0, 0, 1, 0, 0, 0, 6, 'female'],
+    ['leave_without_pay', 'LWOP', 'Leave Without Pay', 'Unpaid leave that does not consume a tracked balance.', 0, 0, 0, 1, 0, 0, 0, 0, 0, 'all'],
+  ];
+
+  for (const row of defaults) {
+    await db.run(
+      `INSERT OR IGNORE INTO leave_types (
+        id, code, name, description, is_paid, track_balance, annual_credit,
+        allow_half_day, require_attachment, advance_notice_days,
+        allow_carry_over, max_carry_over, min_service_months,
+        gender_eligibility, is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      ...row,
+    );
+  }
+}
+
+async function seedCurrentYearLeaveBalances(db: Database): Promise<void> {
+  const year = new Date().getFullYear();
+  await db.run(
+    `INSERT OR IGNORE INTO employee_leave_balances (
+      id, employee_id, leave_type_id, balance_year, opening_balance, earned,
+      adjustments, notes, created_at, updated_at
+    )
+    SELECT
+      'balance_' || lower(hex(randomblob(16))),
+      employees.id,
+      leave_types.id,
+      ?,
+      0,
+      leave_types.annual_credit,
+      0,
+      'Automatically created from the leave-type annual credit.',
+      datetime('now'),
+      datetime('now')
+    FROM employees
+    CROSS JOIN leave_types
+    WHERE employees.is_active = 1
+      AND leave_types.is_active = 1
+      AND leave_types.track_balance = 1`,
+    year,
   );
 }
 

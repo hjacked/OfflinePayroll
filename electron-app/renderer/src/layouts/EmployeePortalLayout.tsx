@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 
 export default function EmployeePortalLayout() {
   return (
@@ -8,7 +8,11 @@ export default function EmployeePortalLayout() {
           <strong>PayPayroll Offline</strong>
           <span>Employee self-service</span>
         </div>
-        <Link to="/admin/dashboard">Back to Administration</Link>
+        <nav className="employee-portal-nav" aria-label="Employee portal navigation">
+          <NavLink end to="/employee">Dashboard</NavLink>
+          <NavLink to="/employee/leave">My Leave</NavLink>
+          <NavLink to="/admin/dashboard">Administration</NavLink>
+        </nav>
       </header>
       <main className="employee-portal-content">
         <Outlet />
