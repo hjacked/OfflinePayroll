@@ -26,6 +26,7 @@ export async function initDb(): Promise<Database> {
   await seedDefaultWorkSchedule(database);
   await seedDefaultLeaveTypes(database);
   await seedCurrentYearLeaveBalances(database);
+  await seedDefaultEarningTypes(database);
 
   console.log('Payroll database initialized:', getDatabasePath());
   return database;
@@ -325,6 +326,87 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS earning_types (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      category TEXT NOT NULL DEFAULT 'allowance',
+      description TEXT,
+      calculation_type TEXT NOT NULL DEFAULT 'fixed',
+      default_amount REAL NOT NULL DEFAULT 0,
+      recurrence TEXT NOT NULL DEFAULT 'recurring',
+      taxability TEXT NOT NULL DEFAULT 'taxable',
+      include_in_gross INTEGER NOT NULL DEFAULT 1,
+      include_in_contribution_basis INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (category IN ('allowance', 'bonus', 'incentive', 'commission', 'reimbursement', 'adjustment', 'other')),
+      CHECK (calculation_type IN ('fixed', 'variable')),
+      CHECK (default_amount >= 0),
+      CHECK (recurrence IN ('recurring', 'one-time')),
+      CHECK (taxability IN ('taxable', 'non-taxable')),
+      CHECK (include_in_gross IN (0, 1)),
+      CHECK (include_in_contribution_basis IN (0, 1)),
+      CHECK (is_active IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS earning_assignments (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      earning_type_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      effective_from TEXT NOT NULL,
+      effective_to TEXT,
+      notes TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (earning_type_id) REFERENCES earning_types(id) ON DELETE RESTRICT,
+      CHECK (amount >= 0),
+      CHECK (effective_to IS NULL OR effective_to = '' OR effective_to >= effective_from),
+      CHECK (is_active IN (0, 1))
+    );
+
+    CREATE TABLE IF NOT EXISTS earning_transactions (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL,
+      earning_type_id TEXT NOT NULL,
+      assignment_id TEXT,
+      transaction_date TEXT NOT NULL,
+      payroll_period_id TEXT,
+      amount REAL NOT NULL,
+      reference TEXT,
+      notes TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      FOREIGN KEY (earning_type_id) REFERENCES earning_types(id) ON DELETE RESTRICT,
+      FOREIGN KEY (assignment_id) REFERENCES earning_assignments(id) ON DELETE SET NULL,
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE SET NULL,
+      CHECK (amount >= 0),
+      CHECK (status IN ('draft', 'approved', 'cancelled'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_earning_types_active
+      ON earning_types(is_active, category, name);
+
+    CREATE INDEX IF NOT EXISTS idx_earning_assignments_employee_dates
+      ON earning_assignments(employee_id, effective_from, effective_to);
+
+    CREATE INDEX IF NOT EXISTS idx_earning_assignments_type_active
+      ON earning_assignments(earning_type_id, is_active);
+
+    CREATE INDEX IF NOT EXISTS idx_earning_transactions_employee_date
+      ON earning_transactions(employee_id, transaction_date);
+
+    CREATE INDEX IF NOT EXISTS idx_earning_transactions_type_status
+      ON earning_transactions(earning_type_id, status, transaction_date);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(
@@ -552,3 +634,29 @@ export function getDb(): Database {
 
   return database;
 }
+
+async function seedDefaultEarningTypes(db: Database): Promise<void> {
+  const defaults: Array<[
+    string, string, string, string, string, string, number, string, string, number, number
+  ]> = [
+    ['earning_transport', 'TRANS', 'Transportation Allowance', 'allowance', 'Regular transportation support.', 'fixed', 2000, 'recurring', 'non-taxable', 1, 0],
+    ['earning_meal', 'MEAL', 'Meal Allowance', 'allowance', 'Regular meal support.', 'fixed', 1500, 'recurring', 'non-taxable', 1, 0],
+    ['earning_communication', 'COMM', 'Communication Allowance', 'allowance', 'Mobile and communication support.', 'fixed', 1000, 'recurring', 'taxable', 1, 0],
+    ['earning_performance', 'PERF', 'Performance Bonus', 'bonus', 'Performance-based one-time bonus.', 'variable', 0, 'one-time', 'taxable', 1, 0],
+    ['earning_commission', 'COMMS', 'Sales Commission', 'commission', 'Variable sales commission.', 'variable', 0, 'one-time', 'taxable', 1, 1],
+    ['earning_reimbursement', 'REIMB', 'Reimbursement', 'reimbursement', 'Approved business expense reimbursement.', 'variable', 0, 'one-time', 'non-taxable', 1, 0],
+    ['earning_adjustment', 'ADJ', 'Salary Adjustment', 'adjustment', 'Manual payroll earning adjustment.', 'variable', 0, 'one-time', 'taxable', 1, 1]
+  ];
+
+  for (const row of defaults) {
+    await db.run(
+      `INSERT OR IGNORE INTO earning_types (
+        id, code, name, category, description, calculation_type,
+        default_amount, recurrence, taxability, include_in_gross,
+        include_in_contribution_basis, is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      ...row,
+    );
+  }
+}
+

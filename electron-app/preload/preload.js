@@ -164,6 +164,125 @@ contextBridge.exposeInMainWorld('api', {
       ),
   },
 
+  earningType: {
+    list: (filters) =>
+      ipcRenderer.invoke(
+        'earningType.list',
+        filters
+      ),
+
+    get: (id) =>
+      ipcRenderer.invoke(
+        'earningType.get',
+        id
+      ),
+
+    create: (payload) =>
+      ipcRenderer.invoke(
+        'earningType.create',
+        payload
+      ),
+
+    update: (id, payload) =>
+      ipcRenderer.invoke(
+        'earningType.update',
+        id,
+        payload
+      ),
+
+    setStatus: (id, active) =>
+      ipcRenderer.invoke(
+        'earningType.setStatus',
+        id,
+        active
+      ),
+
+    delete: (id) =>
+      ipcRenderer.invoke(
+        'earningType.delete',
+        id
+      ),
+  },
+
+  earningAssignment: {
+    list: (filters) =>
+      ipcRenderer.invoke(
+        'earningAssignment.list',
+        filters
+      ),
+
+    get: (id) =>
+      ipcRenderer.invoke(
+        'earningAssignment.get',
+        id
+      ),
+
+    create: (payload) =>
+      ipcRenderer.invoke(
+        'earningAssignment.create',
+        payload
+      ),
+
+    update: (id, payload) =>
+      ipcRenderer.invoke(
+        'earningAssignment.update',
+        id,
+        payload
+      ),
+
+    delete: (id) =>
+      ipcRenderer.invoke(
+        'earningAssignment.delete',
+        id
+      ),
+  },
+
+  earningTransaction: {
+    list: (filters) =>
+      ipcRenderer.invoke(
+        'earningTransaction.list',
+        filters
+      ),
+
+    get: (id) =>
+      ipcRenderer.invoke(
+        'earningTransaction.get',
+        id
+      ),
+
+    summary: (filters) =>
+      ipcRenderer.invoke(
+        'earningTransaction.summary',
+        filters
+      ),
+
+    create: (payload) =>
+      ipcRenderer.invoke(
+        'earningTransaction.create',
+        payload
+      ),
+
+    update: (id, payload) =>
+      ipcRenderer.invoke(
+        'earningTransaction.update',
+        id,
+        payload
+      ),
+
+    setStatus: (id, status) =>
+      ipcRenderer.invoke(
+        'earningTransaction.setStatus',
+        id,
+        status
+      ),
+
+    delete: (id) =>
+      ipcRenderer.invoke(
+        'earningTransaction.delete',
+        id
+      ),
+  },
+
   payroll: {
     createPeriod: (payload) =>
       ipcRenderer.invoke(
@@ -172,6 +291,9 @@ contextBridge.exposeInMainWorld('api', {
       ),
 
     run: (id) =>
-      ipcRenderer.invoke('payroll.run', id),
+      ipcRenderer.invoke(
+        'payroll.run',
+        id
+      ),
   },
 });

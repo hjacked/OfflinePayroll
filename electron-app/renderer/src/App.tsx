@@ -3,6 +3,12 @@ import AdminLayout from './layouts/AdminLayout';
 import EmployeePortalLayout from './layouts/EmployeePortalLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminModulePage from './pages/admin/AdminModulePage';
+import EarningAssignmentsPage from './pages/admin/earnings/EarningAssignmentsPage';
+import EarningTransactionDetailsPage from './pages/admin/earnings/EarningTransactionDetailsPage';
+import EarningTransactionFormPage from './pages/admin/earnings/EarningTransactionFormPage';
+import EarningTypesPage from './pages/admin/earnings/EarningTypesPage';
+import EarningsPage from './pages/admin/earnings/EarningsPage';
+import EmployeeEarningsPage from './pages/employee/earnings/EmployeeEarningsPage';
 import EmployeeDetailsPage from './pages/admin/employees/EmployeeDetailsPage';
 import EmployeeFormPage from './pages/admin/employees/EmployeeFormPage';
 import EmployeeListPage from './pages/admin/employees/EmployeeListPage';
@@ -26,6 +32,7 @@ import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
 import './leave-management.css';
+import './earnings.css';
 
 export default function App() {
   return (
@@ -55,10 +62,12 @@ export default function App() {
         <Route path="leave-management/balances" element={<LeaveBalancesPage />} />
         <Route path="leave-management/:id" element={<LeaveRequestDetailsPage />} />
         <Route path="leave-management/:id/edit" element={<LeaveRequestFormPage />} />
-        <Route
-          path="earnings"
-          element={<AdminModulePage moduleKey="earnings" />}
-        />
+        <Route path="earnings" element={<EarningsPage />} />
+        <Route path="earnings/types" element={<EarningTypesPage />} />
+        <Route path="earnings/assignments" element={<EarningAssignmentsPage />} />
+        <Route path="earnings/new" element={<EarningTransactionFormPage />} />
+        <Route path="earnings/:id" element={<EarningTransactionDetailsPage />} />
+        <Route path="earnings/:id/edit" element={<EarningTransactionFormPage />} />
         <Route
           path="deductions"
           element={<AdminModulePage moduleKey="deductions" />}
@@ -87,6 +96,7 @@ export default function App() {
         <Route path="leave" element={<EmployeeLeavePage />} />
         <Route path="leave/new" element={<EmployeeLeaveFormPage />} />
         <Route path="leave/:id" element={<EmployeeLeaveDetailsPage />} />
+        <Route path="earnings" element={<EmployeeEarningsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

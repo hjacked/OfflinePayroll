@@ -19,6 +19,27 @@ import {
   updateWorkSchedule,
 } from './services/attendance-service';
 import {
+  createEarningAssignment,
+  createEarningTransaction,
+  createEarningType,
+  deleteEarningAssignment,
+  deleteEarningTransaction,
+  deleteEarningType,
+  getEarningAssignment,
+  getEarningAssignments,
+  getEarningSummary,
+  getEarningTransaction,
+  getEarningTransactions,
+  getEarningType,
+  getEarningTypes,
+  setEarningAssignmentStatus,
+  setEarningTransactionStatus,
+  setEarningTypeStatus,
+  updateEarningAssignment,
+  updateEarningTransaction,
+  updateEarningType,
+} from './services/earnings-service';
+import {
   createEmployee,
   deleteEmployee,
   getAllEmployees,
@@ -228,6 +249,93 @@ export function setupIpc(ipcMain: IpcMain): void {
     'leaveRequest.cancel',
     async (_event, id: unknown, payload: unknown) =>
       cancelLeaveRequest(requireId(id, 'leave request'), payload),
+  );
+
+
+  registerHandler(ipcMain, 'earningType.list', async (_event, filters: unknown) =>
+    getEarningTypes(filters),
+  );
+  registerHandler(ipcMain, 'earningType.get', async (_event, id: unknown) =>
+    getEarningType(requireId(id, 'earning type')),
+  );
+  registerHandler(ipcMain, 'earningType.create', async (_event, payload: unknown) =>
+    createEarningType(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'earningType.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateEarningType(requireId(id, 'earning type'), payload),
+  );
+  registerHandler(
+    ipcMain,
+    'earningType.setStatus',
+    async (_event, id: unknown, active: unknown) => {
+      if (typeof active !== 'boolean') throw new Error('Earning type status must be true or false.');
+      return setEarningTypeStatus(requireId(id, 'earning type'), active);
+    },
+  );
+  registerHandler(ipcMain, 'earningType.delete', async (_event, id: unknown) =>
+    deleteEarningType(requireId(id, 'earning type')),
+  );
+
+  registerHandler(ipcMain, 'earningAssignment.list', async (_event, filters: unknown) =>
+    getEarningAssignments(filters),
+  );
+  registerHandler(ipcMain, 'earningAssignment.get', async (_event, id: unknown) =>
+    getEarningAssignment(requireId(id, 'earning assignment')),
+  );
+  registerHandler(ipcMain, 'earningAssignment.create', async (_event, payload: unknown) =>
+    createEarningAssignment(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'earningAssignment.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateEarningAssignment(requireId(id, 'earning assignment'), payload),
+  );
+  registerHandler(
+    ipcMain,
+    'earningAssignment.setStatus',
+    async (_event, id: unknown, active: unknown) => {
+      if (typeof active !== 'boolean') throw new Error('Earning assignment status must be true or false.');
+      return setEarningAssignmentStatus(requireId(id, 'earning assignment'), active);
+    },
+  );
+  registerHandler(ipcMain, 'earningAssignment.delete', async (_event, id: unknown) =>
+    deleteEarningAssignment(requireId(id, 'earning assignment')),
+  );
+
+  registerHandler(ipcMain, 'earningTransaction.list', async (_event, filters: unknown) =>
+    getEarningTransactions(filters),
+  );
+  registerHandler(ipcMain, 'earningTransaction.get', async (_event, id: unknown) =>
+    getEarningTransaction(requireId(id, 'earning transaction')),
+  );
+  registerHandler(ipcMain, 'earningTransaction.summary', async (_event, filters: unknown) =>
+    getEarningSummary(filters),
+  );
+  registerHandler(ipcMain, 'earningTransaction.create', async (_event, payload: unknown) =>
+    createEarningTransaction(payload),
+  );
+  registerHandler(
+    ipcMain,
+    'earningTransaction.update',
+    async (_event, id: unknown, payload: unknown) =>
+      updateEarningTransaction(requireId(id, 'earning transaction'), payload),
+  );
+  registerHandler(
+    ipcMain,
+    'earningTransaction.setStatus',
+    async (_event, id: unknown, status: unknown) => {
+      if (status !== 'draft' && status !== 'approved' && status !== 'cancelled') {
+        throw new Error('Invalid earning transaction status.');
+      }
+      return setEarningTransactionStatus(requireId(id, 'earning transaction'), status);
+    },
+  );
+  registerHandler(ipcMain, 'earningTransaction.delete', async (_event, id: unknown) =>
+    deleteEarningTransaction(requireId(id, 'earning transaction')),
   );
 
   registerHandler(

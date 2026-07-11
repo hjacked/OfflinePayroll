@@ -24,6 +24,19 @@ import type {
   LeaveTypeInput,
 } from './models/Leave';
 import type {
+  EarningAssignment,
+  EarningAssignmentFilters,
+  EarningAssignmentInput,
+  EarningSummary,
+  EarningTransaction,
+  EarningTransactionFilters,
+  EarningTransactionInput,
+  EarningTransactionStatus,
+  EarningType,
+  EarningTypeFilters,
+  EarningTypeInput,
+} from './models/Earnings';
+import type {
   Employee,
   EmployeeInput,
   EmployeeListFilters,
@@ -111,6 +124,31 @@ export interface PayrollApi {
       id: string,
       payload?: { reason: string },
     ) => Promise<LeaveRequest>;
+  };
+  earningType: {
+    list: (filters?: EarningTypeFilters) => Promise<{ data: EarningType[]; total: number }>;
+    get: (id: string) => Promise<EarningType | null>;
+    create: (payload: EarningTypeInput) => Promise<EarningType>;
+    update: (id: string, payload: EarningTypeInput) => Promise<EarningType>;
+    setStatus: (id: string, active: boolean) => Promise<EarningType>;
+    delete: (id: string) => Promise<{ id: string; deactivated: boolean }>;
+  };
+  earningAssignment: {
+    list: (filters?: EarningAssignmentFilters) => Promise<{ data: EarningAssignment[]; total: number }>;
+    get: (id: string) => Promise<EarningAssignment | null>;
+    create: (payload: EarningAssignmentInput) => Promise<EarningAssignment>;
+    update: (id: string, payload: EarningAssignmentInput) => Promise<EarningAssignment>;
+    setStatus: (id: string, active: boolean) => Promise<EarningAssignment>;
+    delete: (id: string) => Promise<{ id: string; deactivated: boolean }>;
+  };
+  earningTransaction: {
+    list: (filters?: EarningTransactionFilters) => Promise<{ data: EarningTransaction[]; total: number }>;
+    get: (id: string) => Promise<EarningTransaction | null>;
+    summary: (filters?: EarningTransactionFilters) => Promise<EarningSummary>;
+    create: (payload: EarningTransactionInput) => Promise<EarningTransaction>;
+    update: (id: string, payload: EarningTransactionInput) => Promise<EarningTransaction>;
+    setStatus: (id: string, status: EarningTransactionStatus) => Promise<EarningTransaction>;
+    delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
   };
   payroll: {
     createPeriod: (payload: {

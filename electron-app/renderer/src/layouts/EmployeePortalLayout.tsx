@@ -11,6 +11,7 @@ export default function EmployeePortalLayout() {
         <nav className="employee-portal-nav" aria-label="Employee portal navigation">
           <NavLink end to="/employee">Dashboard</NavLink>
           <NavLink to="/employee/leave">My Leave</NavLink>
+          <NavLink to="/employee/earnings">My Earnings</NavLink>
           <NavLink to="/admin/dashboard">Administration</NavLink>
         </nav>
       </header>
