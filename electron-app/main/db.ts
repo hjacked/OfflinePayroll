@@ -1003,6 +1003,37 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS application_audit_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      username TEXT,
+      display_name TEXT,
+      role TEXT,
+      module TEXT NOT NULL,
+      action TEXT NOT NULL,
+      entity_type TEXT,
+      entity_id TEXT,
+      outcome TEXT NOT NULL DEFAULT 'success',
+      channel TEXT,
+      summary TEXT NOT NULL,
+      metadata_json TEXT NOT NULL DEFAULT '{}',
+      origin TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      CHECK (outcome IN ('success', 'failure', 'info'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_application_audit_created
+      ON application_audit_logs(created_at DESC, module, outcome);
+
+    CREATE INDEX IF NOT EXISTS idx_application_audit_user
+      ON application_audit_logs(user_id, created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_application_audit_entity
+      ON application_audit_logs(entity_type, entity_id, created_at DESC);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(

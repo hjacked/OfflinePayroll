@@ -73,6 +73,7 @@ import ChangePasswordPage from './pages/account/ChangePasswordPage';
 import UserAccountsPage from './pages/admin/users/UserAccountsPage';
 import SettingsPage from './pages/admin/settings/SettingsPage';
 import BackupRestorePage from './pages/admin/settings/BackupRestorePage';
+import AuditLogsPage from './pages/admin/audit/AuditLogsPage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -87,6 +88,7 @@ import './auth.css';
 import './employee-self-service.css';
 import './settings.css';
 import './backup.css';
+import './audit.css';
 
 export default function App() {
   return (
@@ -183,6 +185,14 @@ export default function App() {
           element={
             <RequirePermission permission="users:manage">
               <UserAccountsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="audit-logs"
+          element={
+            <RequirePermission permission="audit:view">
+              <AuditLogsPage />
             </RequirePermission>
           }
         />

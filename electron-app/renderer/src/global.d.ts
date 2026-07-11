@@ -128,6 +128,12 @@ import type {
   RestoreResult,
 } from './models/Backup';
 import type {
+  AuditExportResult,
+  AuditFilters,
+  AuditListResult,
+  AuditLogEntry,
+} from './models/Audit';
+import type {
   BankTransferReport,
   ContributionReport,
   LineItemReport,
@@ -385,6 +391,11 @@ export interface PayrollApi {
       notes?: string,
     ) => Promise<RestoreResult | { restored: false; cancelled: true }>;
     reveal: (filePath: string) => Promise<{ revealed: true }>;
+  };
+  audit: {
+    list: (filters?: AuditFilters) => Promise<AuditListResult>;
+    get: (id: string) => Promise<AuditLogEntry>;
+    exportCsv: (filters?: AuditFilters) => Promise<AuditExportResult>;
   };
   companyProfile: {
     get: () => Promise<CompanyProfile>;

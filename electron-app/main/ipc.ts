@@ -214,6 +214,13 @@ import {
   updateUser,
   authorizePermission,
 } from './services/auth-service';
+import {
+  exportAuditLogsCsv,
+  getAuditLog,
+  isAuditableChannel,
+  listAuditLogs,
+  recordIpcAudit,
+} from './services/audit-service';
 
 export function setupIpc(ipcMain: IpcMain): void {
   registerHandler(ipcMain, 'auth.initialize', async () => {
@@ -227,6 +234,27 @@ export function setupIpc(ipcMain: IpcMain): void {
     changePassword(payload),
   );
 
+  registerHandler(ipcMain, 'audit.list', async (_event, filters: unknown) =>
+    listAuditLogs(filters),
+  );
+  registerHandler(ipcMain, 'audit.get', async (_event, id: unknown) =>
+    getAuditLog(id),
+  );
+  registerHandler(ipcMain, 'audit.exportCsv', async (event, filters: unknown) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      title: 'Export audit logs',
+      defaultPath: `payroll-audit-logs-${new Date().toISOString().slice(0, 10)}.csv`,
+      filters: [{ name: 'CSV file', extensions: ['csv'] }],
+    };
+    const result = parent
+      ? await dialog.showSaveDialog(parent, options)
+      : await dialog.showSaveDialog(options);
+    if (result.canceled || !result.filePath) return { saved: false };
+    const csv = await exportAuditLogsCsv(filters);
+    await writeFile(result.filePath, csv, 'utf8');
+    return { saved: true, filePath: result.filePath };
+  });
 
   registerHandler(ipcMain, 'self.dashboard', async () => getSelfServiceDashboard());
   registerHandler(ipcMain, 'self.profile', async () => getSelfServiceProfile());
@@ -1188,14 +1216,35 @@ function registerHandler(
 ): void {
   ipcMain.removeHandler(channel);
   ipcMain.handle(channel, async (...args) => {
-    const permission = getChannelPermission(channel);
-    if (permission) await authorizePermission(permission);
-    return listener(...args);
+    const event = args[0];
+    const userArgs = args.slice(1);
+    const origin = typeof event?.sender?.getURL === 'function'
+      ? event.sender.getURL()
+      : null;
+    try {
+      const permission = getChannelPermission(channel);
+      if (permission) await authorizePermission(permission);
+      const result = await listener(...args);
+      if (isAuditableChannel(channel)) {
+        await recordIpcAudit({ channel, args: userArgs, result, outcome: 'success', origin })
+          .catch((error) => console.error('Failed to record audit event:', error));
+      }
+      return result;
+    } catch (error) {
+      if (isAuditableChannel(channel)) {
+        await recordIpcAudit({ channel, args: userArgs, error, outcome: 'failure', origin })
+          .catch((auditError) => console.error('Failed to record audit failure:', auditError));
+      }
+      throw error;
+    }
   });
 }
 
 function getChannelPermission(channel: string): string | null {
   const exact: Record<string, string> = {
+    'audit.list': 'audit:view',
+    'audit.get': 'audit:view',
+    'audit.exportCsv': 'audit:view',
     'user.get': 'users:manage',
     'employee.list': 'employees:view',
     'employee.get': 'employees:view',

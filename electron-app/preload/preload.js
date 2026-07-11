@@ -233,6 +233,12 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('payslip.exportPdf', id, suggestedName, actor),
   },
 
+  audit: {
+    list: (filters) => ipcRenderer.invoke('audit.list', filters),
+    get: (id) => ipcRenderer.invoke('audit.get', id),
+    exportCsv: (filters) => ipcRenderer.invoke('audit.exportCsv', filters),
+  },
+
   report: {
     options: () => ipcRenderer.invoke('report.options'),
     dashboard: (filters) => ipcRenderer.invoke('report.dashboard', filters),

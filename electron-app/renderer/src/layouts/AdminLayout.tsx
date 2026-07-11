@@ -14,6 +14,7 @@ const fixedNavigation: NavigationItem[] = [
   { label: 'Dashboard', shortCode: 'DB', path: '/admin/dashboard', permission: 'dashboard:view' },
   { label: 'Employees', shortCode: 'EM', path: '/admin/employees', permission: 'employees:view' },
   { label: 'Payroll Processing', shortCode: 'PR', path: '/admin/payroll', permission: 'payroll:manage' },
+  { label: 'Audit Logs', shortCode: 'AL', path: '/admin/audit-logs', permission: 'audit:view' },
   { label: 'Users & Roles', shortCode: 'UR', path: '/admin/users', permission: 'users:manage' },
 ];
 
@@ -45,6 +46,7 @@ const allNavigation: NavigationItem[] = [
     permission: modulePermissions[item.path] ?? 'dashboard:view',
   })),
   fixedNavigation[3],
+  fixedNavigation[4],
 ];
 
 function getPageTitle(pathname: string, navigation: NavigationItem[]): string {

@@ -518,9 +518,9 @@ async function stripAuditLogs(filePath: string): Promise<void> {
       `SELECT name FROM sqlite_master
         WHERE type = 'table'
           AND name IN (
-            'auth_audit_logs', 'settings_audit_logs',
-            'payslip_download_logs', 'backup_audit_logs',
-            'backup_restore_logs'
+            'application_audit_logs', 'auth_audit_logs', 'settings_audit_logs',
+            'payroll_action_logs', 'payslip_action_logs', 'payslip_download_logs',
+            'backup_audit_logs', 'backup_restore_logs'
           )`,
     );
     await backupDb.exec('BEGIN;');
