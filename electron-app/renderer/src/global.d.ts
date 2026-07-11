@@ -78,6 +78,16 @@ import type {
   EmployeeListFilters,
 } from './models/Employee';
 
+import type {
+  EmployeePayrollHistoryRecord,
+  PayrollEmployeeResult,
+  PayrollPeriod,
+  PayrollPeriodDetails,
+  PayrollPeriodInput,
+  PayrollRegister,
+  PayrollWorkflowStatus,
+} from './models/PayrollPeriod';
+
 export interface PayrollApi {
   employee: {
     list: (
@@ -257,25 +267,32 @@ export interface PayrollApi {
     delete: (id: string) => Promise<{ id: string; cancelled: boolean }>;
   };
   payroll: {
-    createPeriod: (payload: {
-      name: string;
-      start_date: string;
-      end_date: string;
-      frequency: string;
-      created_by?: string;
-    }) => Promise<{
-      period: {
-        id: string;
-        name: string;
-        start_date: string;
-        end_date: string;
-        frequency: string;
-        status: string;
-        created_by?: string;
-        created_at?: string;
-        updated_at?: string;
-      };
-    }>;
+    list: (filters?: {
+      query?: string;
+      status?: PayrollWorkflowStatus | 'all';
+      date_from?: string;
+      date_to?: string;
+    }) => Promise<{ data: PayrollPeriod[]; total: number }>;
+    get: (id: string) => Promise<PayrollPeriod | null>;
+    details: (id: string) => Promise<PayrollPeriodDetails | null>;
+    employeeResult: (
+      periodId: string,
+      employeeId: string,
+    ) => Promise<PayrollEmployeeResult | null>;
+    createPeriod: (payload: PayrollPeriodInput) => Promise<{ period: PayrollPeriod }>;
+    updatePeriod: (id: string, payload: PayrollPeriodInput) => Promise<PayrollPeriod>;
+    deletePeriod: (id: string) => Promise<{ id: string }>;
+    calculate: (id: string, actor?: string) => Promise<PayrollPeriodDetails>;
+    approve: (id: string, actor?: string) => Promise<PayrollPeriod>;
+    finalize: (id: string, actor?: string) => Promise<PayrollPeriod>;
+    lock: (id: string, actor?: string) => Promise<PayrollPeriod>;
+    cancel: (id: string, actor?: string) => Promise<PayrollPeriod>;
+    register: (id: string) => Promise<PayrollRegister>;
+    employeeHistory: (filters?: {
+      employee_id?: string;
+      date_from?: string;
+      date_to?: string;
+    }) => Promise<{ data: EmployeePayrollHistoryRecord[]; total: number }>;
     run: (periodId: string) => Promise<{ periodId: string; status: string }>;
   };
 }

@@ -114,8 +114,21 @@ import {
   updateLeaveType,
 } from './services/leave-service';
 import {
+  approvePayrollPeriod,
+  calculatePayrollPeriod,
+  cancelPayrollPeriod,
   createPayrollPeriod,
+  deletePayrollPeriod,
+  finalizePayrollPeriod,
+  getEmployeePayrollHistory,
+  getPayrollEmployeeResult,
+  getPayrollPeriod,
+  getPayrollPeriodDetails,
+  getPayrollPeriods,
+  getPayrollRegister,
+  lockPayrollPeriod,
   runPayroll,
+  updatePayrollPeriod,
 } from './services/payroll-service';
 
 export function setupIpc(ipcMain: IpcMain): void {
@@ -578,18 +591,94 @@ export function setupIpc(ipcMain: IpcMain): void {
     deleteContributionRecord(requireId(id, 'contribution record')),
   );
 
+  registerHandler(ipcMain, 'payroll.list', async (_event, filters: unknown) =>
+    getPayrollPeriods(filters),
+  );
+  registerHandler(ipcMain, 'payroll.get', async (_event, periodId: unknown) =>
+    getPayrollPeriod(requireId(periodId, 'payroll period')),
+  );
+  registerHandler(ipcMain, 'payroll.details', async (_event, periodId: unknown) =>
+    getPayrollPeriodDetails(requireId(periodId, 'payroll period')),
+  );
+  registerHandler(
+    ipcMain,
+    'payroll.employeeResult',
+    async (_event, periodId: unknown, employeeId: unknown) =>
+      getPayrollEmployeeResult(
+        requireId(periodId, 'payroll period'),
+        requireId(employeeId, 'employee'),
+      ),
+  );
   registerHandler(
     ipcMain,
     'payroll.createPeriod',
     async (_event, payload: unknown) => createPayrollPeriod(payload),
   );
+  registerHandler(
+    ipcMain,
+    'payroll.updatePeriod',
+    async (_event, periodId: unknown, payload: unknown) =>
+      updatePayrollPeriod(requireId(periodId, 'payroll period'), payload),
+  );
+  registerHandler(ipcMain, 'payroll.deletePeriod', async (_event, periodId: unknown) =>
+    deletePayrollPeriod(requireId(periodId, 'payroll period')),
+  );
+  registerHandler(
+    ipcMain,
+    'payroll.calculate',
+    async (_event, periodId: unknown, actor: unknown) =>
+      calculatePayrollPeriod(
+        requireId(periodId, 'payroll period'),
+        typeof actor === 'string' ? actor : '',
+      ),
+  );
+  registerHandler(
+    ipcMain,
+    'payroll.approve',
+    async (_event, periodId: unknown, actor: unknown) =>
+      approvePayrollPeriod(
+        requireId(periodId, 'payroll period'),
+        typeof actor === 'string' ? actor : '',
+      ),
+  );
+  registerHandler(
+    ipcMain,
+    'payroll.finalize',
+    async (_event, periodId: unknown, actor: unknown) =>
+      finalizePayrollPeriod(
+        requireId(periodId, 'payroll period'),
+        typeof actor === 'string' ? actor : '',
+      ),
+  );
+  registerHandler(
+    ipcMain,
+    'payroll.lock',
+    async (_event, periodId: unknown, actor: unknown) =>
+      lockPayrollPeriod(
+        requireId(periodId, 'payroll period'),
+        typeof actor === 'string' ? actor : '',
+      ),
+  );
+  registerHandler(
+    ipcMain,
+    'payroll.cancel',
+    async (_event, periodId: unknown, actor: unknown) =>
+      cancelPayrollPeriod(
+        requireId(periodId, 'payroll period'),
+        typeof actor === 'string' ? actor : '',
+      ),
+  );
+  registerHandler(ipcMain, 'payroll.register', async (_event, periodId: unknown) =>
+    getPayrollRegister(requireId(periodId, 'payroll period')),
+  );
+  registerHandler(ipcMain, 'payroll.employeeHistory', async (_event, filters: unknown) =>
+    getEmployeePayrollHistory(filters),
+  );
 
-  registerHandler(ipcMain, 'payroll.run', async (_event, periodId: unknown) => {
-    if (typeof periodId !== 'string' || !periodId.trim()) {
-      throw new Error('A valid payroll-period ID is required.');
-    }
-    return runPayroll(periodId);
-  });
+  // Legacy Phase A endpoint.
+  registerHandler(ipcMain, 'payroll.run', async (_event, periodId: unknown) =>
+    runPayroll(requireId(periodId, 'payroll period')),
+  );
 }
 
 function requireId(value: unknown, label: string): string {

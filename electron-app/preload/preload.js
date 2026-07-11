@@ -148,7 +148,21 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   payroll: {
+    list: (filters) => ipcRenderer.invoke('payroll.list', filters),
+    get: (id) => ipcRenderer.invoke('payroll.get', id),
+    details: (id) => ipcRenderer.invoke('payroll.details', id),
+    employeeResult: (periodId, employeeId) =>
+      ipcRenderer.invoke('payroll.employeeResult', periodId, employeeId),
     createPeriod: (payload) => ipcRenderer.invoke('payroll.createPeriod', payload),
+    updatePeriod: (id, payload) => ipcRenderer.invoke('payroll.updatePeriod', id, payload),
+    deletePeriod: (id) => ipcRenderer.invoke('payroll.deletePeriod', id),
+    calculate: (id, actor) => ipcRenderer.invoke('payroll.calculate', id, actor),
+    approve: (id, actor) => ipcRenderer.invoke('payroll.approve', id, actor),
+    finalize: (id, actor) => ipcRenderer.invoke('payroll.finalize', id, actor),
+    lock: (id, actor) => ipcRenderer.invoke('payroll.lock', id, actor),
+    cancel: (id, actor) => ipcRenderer.invoke('payroll.cancel', id, actor),
+    register: (id) => ipcRenderer.invoke('payroll.register', id),
+    employeeHistory: (filters) => ipcRenderer.invoke('payroll.employeeHistory', filters),
     run: (id) => ipcRenderer.invoke('payroll.run', id),
   },
 });

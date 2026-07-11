@@ -43,7 +43,12 @@ import EmployeeLeaveDetailsPage from './pages/employee/leave/EmployeeLeaveDetail
 import EmployeeLeaveFormPage from './pages/employee/leave/EmployeeLeaveFormPage';
 import EmployeeLeavePage from './pages/employee/leave/EmployeeLeavePage';
 import EmployeePortal from './pages/EmployeePortal';
-import PayrollPortal from './pages/PayrollPortal';
+import PayrollEmployeeResultPage from './pages/admin/payroll/PayrollEmployeeResultPage';
+import PayrollPeriodDetailsPage from './pages/admin/payroll/PayrollPeriodDetailsPage';
+import PayrollPeriodFormPage from './pages/admin/payroll/PayrollPeriodFormPage';
+import PayrollPeriodsPage from './pages/admin/payroll/PayrollPeriodsPage';
+import PayrollRegisterPage from './pages/admin/payroll/PayrollRegisterPage';
+import EmployeePayrollHistoryPage from './pages/employee/payroll/EmployeePayrollHistoryPage';
 import './admin-shell.css';
 import './employee-management.css';
 import './timekeeping.css';
@@ -51,6 +56,7 @@ import './leave-management.css';
 import './earnings.css';
 import './deductions.css';
 import './contributions.css';
+import './payroll.css';
 
 export default function App() {
   return (
@@ -102,7 +108,12 @@ export default function App() {
         <Route path="government-contributions/calculator" element={<ContributionCalculatorPage />} />
         <Route path="government-contributions/history" element={<ContributionHistoryPage />} />
         <Route path="government-contributions/reports" element={<ContributionReportsPage />} />
-        <Route path="payroll" element={<PayrollPortal />} />
+        <Route path="payroll" element={<PayrollPeriodsPage />} />
+        <Route path="payroll/new" element={<PayrollPeriodFormPage />} />
+        <Route path="payroll/:id/edit" element={<PayrollPeriodFormPage />} />
+        <Route path="payroll/:id/register" element={<PayrollRegisterPage />} />
+        <Route path="payroll/:id/employees/:employeeId" element={<PayrollEmployeeResultPage />} />
+        <Route path="payroll/:id" element={<PayrollPeriodDetailsPage />} />
         <Route
           path="reports"
           element={<AdminModulePage moduleKey="reports" />}
@@ -125,6 +136,7 @@ export default function App() {
         <Route path="earnings" element={<EmployeeEarningsPage />} />
         <Route path="deductions" element={<EmployeeDeductionsPage />} />
         <Route path="contributions" element={<EmployeeContributionsPage />} />
+        <Route path="payroll-history" element={<EmployeePayrollHistoryPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

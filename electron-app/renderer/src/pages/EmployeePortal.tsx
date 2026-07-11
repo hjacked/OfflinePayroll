@@ -46,7 +46,8 @@ const portalModules: PortalModule[] = [
     title: 'Payroll History',
     description:
       'View previous payroll periods, gross income, deductions, and net pay.',
-    status: 'Available soon',
+    status: 'Available',
+    path: '/employee/payroll-history',
   },
   {
     title: 'Payslips',

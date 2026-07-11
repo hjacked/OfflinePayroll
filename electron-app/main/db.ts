@@ -79,6 +79,7 @@ async function ensureSchema(db: Database): Promise<void> {
     );
   `);
 
+  await migratePayrollPeriodsTable(db);
   await migrateEmployeesTable(db);
 
   await db.exec(`
@@ -672,6 +673,109 @@ async function ensureSchema(db: Database): Promise<void> {
   `);
 
   await db.exec(`
+    CREATE TABLE IF NOT EXISTS payroll_employee_results (
+      id TEXT PRIMARY KEY,
+      payroll_period_id TEXT NOT NULL,
+      employee_id TEXT NOT NULL,
+      employee_number TEXT NOT NULL,
+      employee_name TEXT NOT NULL,
+      department TEXT,
+      role_title TEXT,
+      salary_type TEXT NOT NULL,
+      basic_salary REAL NOT NULL DEFAULT 0,
+      period_basic_pay REAL NOT NULL DEFAULT 0,
+      overtime_pay REAL NOT NULL DEFAULT 0,
+      night_differential_pay REAL NOT NULL DEFAULT 0,
+      other_earnings REAL NOT NULL DEFAULT 0,
+      gross_income REAL NOT NULL DEFAULT 0,
+      attendance_deductions REAL NOT NULL DEFAULT 0,
+      other_deductions REAL NOT NULL DEFAULT 0,
+      government_deductions REAL NOT NULL DEFAULT 0,
+      employer_contributions REAL NOT NULL DEFAULT 0,
+      total_deductions REAL NOT NULL DEFAULT 0,
+      net_pay REAL NOT NULL DEFAULT 0,
+      taxable_income REAL NOT NULL DEFAULT 0,
+      contribution_basis REAL NOT NULL DEFAULT 0,
+      attendance_days INTEGER NOT NULL DEFAULT 0,
+      paid_days REAL NOT NULL DEFAULT 0,
+      absent_days REAL NOT NULL DEFAULT 0,
+      paid_leave_days REAL NOT NULL DEFAULT 0,
+      unpaid_leave_days REAL NOT NULL DEFAULT 0,
+      regular_hours REAL NOT NULL DEFAULT 0,
+      overtime_hours REAL NOT NULL DEFAULT 0,
+      late_minutes INTEGER NOT NULL DEFAULT 0,
+      undertime_minutes INTEGER NOT NULL DEFAULT 0,
+      validation_status TEXT NOT NULL DEFAULT 'ok',
+      calculated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE CASCADE,
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      UNIQUE (payroll_period_id, employee_id),
+      CHECK (validation_status IN ('ok','warning','error'))
+    );
+
+    CREATE TABLE IF NOT EXISTS payroll_line_items (
+      id TEXT PRIMARY KEY,
+      payroll_result_id TEXT NOT NULL,
+      payroll_period_id TEXT NOT NULL,
+      employee_id TEXT NOT NULL,
+      item_type TEXT NOT NULL,
+      source_type TEXT NOT NULL,
+      source_id TEXT,
+      code TEXT,
+      name TEXT NOT NULL,
+      amount REAL NOT NULL DEFAULT 0,
+      taxable INTEGER NOT NULL DEFAULT 0,
+      contribution_basis INTEGER NOT NULL DEFAULT 0,
+      employer_amount REAL NOT NULL DEFAULT 0,
+      metadata_json TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payroll_result_id) REFERENCES payroll_employee_results(id) ON DELETE CASCADE,
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE CASCADE,
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE RESTRICT,
+      CHECK (item_type IN ('earning','deduction','contribution','employer-contribution','information')),
+      CHECK (taxable IN (0,1)),
+      CHECK (contribution_basis IN (0,1))
+    );
+
+    CREATE TABLE IF NOT EXISTS payroll_validation_issues (
+      id TEXT PRIMARY KEY,
+      payroll_period_id TEXT NOT NULL,
+      employee_id TEXT,
+      severity TEXT NOT NULL,
+      code TEXT NOT NULL,
+      message TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE CASCADE,
+      FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+      CHECK (severity IN ('warning','error'))
+    );
+
+    CREATE TABLE IF NOT EXISTS payroll_action_logs (
+      id TEXT PRIMARY KEY,
+      payroll_period_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      actor TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (payroll_period_id) REFERENCES payroll_periods(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_payroll_results_period_employee
+      ON payroll_employee_results(payroll_period_id, employee_id);
+    CREATE INDEX IF NOT EXISTS idx_payroll_results_department
+      ON payroll_employee_results(payroll_period_id, department);
+    CREATE INDEX IF NOT EXISTS idx_payroll_line_items_result_type
+      ON payroll_line_items(payroll_result_id, item_type, sort_order);
+    CREATE INDEX IF NOT EXISTS idx_payroll_validation_period_severity
+      ON payroll_validation_issues(payroll_period_id, severity, employee_id);
+    CREATE INDEX IF NOT EXISTS idx_payroll_action_logs_period
+      ON payroll_action_logs(payroll_period_id, created_at);
+  `);
+
+  await db.exec(`
     UPDATE employees
        SET employee_number = COALESCE(NULLIF(trim(employee_number), ''), id),
            first_name = COALESCE(
@@ -704,6 +808,53 @@ async function ensureSchema(db: Database): Promise<void> {
         OR trim(salary_type) = ''
         OR basic_salary IS NULL
         OR is_active IS NULL;
+  `);
+}
+
+async function migratePayrollPeriodsTable(db: Database): Promise<void> {
+  const columns = await db.all<{ name: string }[]>('PRAGMA table_info(payroll_periods);');
+  const existingColumns = new Set(columns.map((column: { name: string }) => column.name));
+
+  const migrations: Array<[string, string]> = [
+    ['workflow_status', "TEXT NOT NULL DEFAULT 'draft'"],
+    ['payment_date', 'TEXT'],
+    ['notes', 'TEXT'],
+    ['workdays_per_month', 'REAL NOT NULL DEFAULT 22'],
+    ['hours_per_day', 'REAL NOT NULL DEFAULT 8'],
+    ['overtime_multiplier', 'REAL NOT NULL DEFAULT 1.25'],
+    ['night_differential_rate', 'REAL NOT NULL DEFAULT 0.10'],
+    ['employee_count', 'INTEGER NOT NULL DEFAULT 0'],
+    ['gross_total', 'REAL NOT NULL DEFAULT 0'],
+    ['deduction_total', 'REAL NOT NULL DEFAULT 0'],
+    ['net_total', 'REAL NOT NULL DEFAULT 0'],
+    ['employer_contribution_total', 'REAL NOT NULL DEFAULT 0'],
+    ['validation_error_count', 'INTEGER NOT NULL DEFAULT 0'],
+    ['validation_warning_count', 'INTEGER NOT NULL DEFAULT 0'],
+    ['calculated_at', 'TEXT'],
+    ['approved_at', 'TEXT'],
+    ['finalized_at', 'TEXT'],
+    ['locked_at', 'TEXT'],
+  ];
+
+  for (const [columnName, definition] of migrations) {
+    if (!existingColumns.has(columnName)) {
+      await db.exec(`ALTER TABLE payroll_periods ADD COLUMN ${columnName} ${definition};`);
+    }
+  }
+
+  await db.exec(`
+    UPDATE payroll_periods
+       SET workflow_status = CASE
+         WHEN status = 'locked' THEN 'locked'
+         WHEN status = 'completed' THEN 'finalized'
+         WHEN status = 'processing' THEN 'calculated'
+         ELSE COALESCE(NULLIF(workflow_status, ''), 'draft')
+       END,
+       payment_date = COALESCE(NULLIF(payment_date, ''), end_date)
+     WHERE workflow_status IS NULL
+        OR trim(workflow_status) = ''
+        OR payment_date IS NULL
+        OR trim(payment_date) = '';
   `);
 }
 

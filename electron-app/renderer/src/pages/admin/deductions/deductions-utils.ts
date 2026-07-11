@@ -19,7 +19,7 @@ export function categoryLabel(value: DeductionCategory): string {
   return deductionCategories.find((item) => item.value === value)?.label ?? value;
 }
 
-export function statusLabel(value: DeductionTransactionStatus | LoanStatus): string {
+export function statusLabel(value: DeductionTransactionStatus | LoanStatus | string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
